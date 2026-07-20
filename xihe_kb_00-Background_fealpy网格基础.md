@@ -1,8 +1,6 @@
-# xihe\_kb\_00\-Background\_fealpy网格基础
+## 一、网格简介
 
-# 一、网格简介
-
-## （1）**网格(mesh)的概念**
+### 1. 网格(mesh)的概念
 
 - **网格**一般由很多 **节点(node)** 以一定方式连接成的 **边(edge)、面(face)、单元(cell)** 形成。
 
@@ -14,7 +12,7 @@
 
 网格的质量直接决定了数值模拟的准确性、稳定性和计算效率。
 
-## **（2）网格的分类**
+### 2. 网格的分类
 
 网格最基本的分类方式是将其分**结构网格**和**非结构网格**，这两种类型的根本区别在于其拓扑结构，即节点和单元之间的连接关系。同时，我们还可以发挥不同网格类型的优点，构造混合网格。
 
@@ -27,11 +25,11 @@
 | <img src="https://github.com/You-yj/markdown_photo/blob/main/fealpy%E7%BD%91%E6%A0%BC%E5%9F%BA%E7%A1%80_photo/image%204.png?raw=true" width="200"/><br><small style="color:#faf8f8">非结构三角形网格</small> | <img src="https://github.com/You-yj/markdown_photo/blob/main/fealpy%E7%BD%91%E6%A0%BC%E5%9F%BA%E7%A1%80_photo/image%202.png?raw=true" width="200"/><br><small style="color:#faf8f8">非结构多边形网格</small> | <img src="https://github.com/You-yj/markdown_photo/blob/main/fealpy%E7%BD%91%E6%A0%BC%E5%9F%BA%E7%A1%80_photo/image.png?raw=true" width="200"/><br><small style="color:#faf8f8">混合网格</small> |
 | <img src="https://github.com/You-yj/markdown_photo/blob/main/fealpy%E7%BD%91%E6%A0%BC%E5%9F%BA%E7%A1%80_photo/image%207.png?raw=true" width="200"/><br><small style="color:#faf8f8">平面网格</small> | <img src="https://github.com/You-yj/markdown_photo/blob/main/fealpy%E7%BD%91%E6%A0%BC%E5%9F%BA%E7%A1%80_photo/%E5%9B%BE%E7%89%872.png?raw=true" width="185"/><br><small style="color:#faf8f8">曲面网格</small> | <img src="https://github.com/You-yj/markdown_photo/blob/main/fealpy%E7%BD%91%E6%A0%BC%E5%9F%BA%E7%A1%80_photo/%E5%9B%BE%E7%89%873.png?raw=true" width="185"/><br><small style="color:#faf8f8">实体网格</small> |
 
-# 二、FEALPy 中的网格数据结构
+## 二、FEALPy 中的网格数据结构
 
-## （1）FEALPy 网格模块设计目标
+### 1. FEALPy 网格模块设计目标
 
-## （2）网格相关术语约定
+### 2. 网格相关术语约定
 
 <div>
     <table>
@@ -112,11 +110,11 @@
 | <img src="https://github.com/You-yj/markdown_photo/blob/main/fealpy%E7%BD%91%E6%A0%BC%E5%9F%BA%E7%A1%80_photo/%E5%9B%BE%E7%89%875.png?raw=true" width="200"/><br><small style="font-size:12px;color:#faf8f8">最高拓扑维数为2</small> | <img src="https://github.com/You-yj/markdown_photo/blob/main/fealpy%E7%BD%91%E6%A0%BC%E5%9F%BA%E7%A1%80_photo/%E5%9B%BE%E7%89%876.png?raw=true" width="200"/><br><small style="font-size:12px;color:#faf8f8">最高拓扑维数为3</small> |
 | :----------------------------------------------------------: | :----------------------------------------------------------: |
 
-## （3）基于数组表示的网格数据结构
+### 3. 基于数组表示的网格数据结构
 
 FEALPy 中核心网格数据结构是用**数组**表示的：**`node`**为**节点坐标数组**，**`cell`**为**单元顶点数组**，**`edge`**为**边数组**，**`face`**为**面数组**。
 
-### `node`、`cell`、`edge`、`face`
+#### `node`、`cell`、`edge`、`face`
 
 ```python
 node = bm.array([
@@ -181,7 +179,7 @@ edge = bm.array([
 
 不难发现，除了`node`节点坐标数组中的元素的顺序，其节点坐标会随之改变。但`cell`、`edge`、`face`中数组的元素的顺序即使改变，它仍然是由这几个节点构成的，不会改变其形状，也不会改变每个cell的序号。例如：`cell[0]=[3, 4, 0]`，将其改成`cell[0]=[3, 0, 4]`，**这有什么区别？**
 
-### 网格实体的全局和局部编号
+#### 网格实体的全局和局部编号
 
 先统一基础前提，网格实体：`node`、`cell`、`edge`、`face`所有实体都存在两套编号体系：
 
@@ -192,7 +190,7 @@ edge = bm.array([
 > 之前说的序号均为全局编号
 > 
 
-#### 全局编号
+##### 全局编号
 
 - 在整个计算域、整张网格范围内，给每一个实体分配唯一 ID
 
@@ -202,7 +200,7 @@ edge = bm.array([
 
 - 存储位置：`node`/ `cell`/ `edge`/ `face` 数组的行下标
 
-#### 局部编号
+##### 局部编号
 
 - 只在某一个单元内部生效的临时编号，脱离当前单元就失去意义。 每个单元内部，独立对自己拥有的顶点、边、面重新从 0 开始编号。
 
@@ -230,9 +228,9 @@ edge = bm.array([
 > 这里就可以片面的回答一下上面问的一个问题，若将`cell[0]=[3, 4, 0]`改成`cell[0]=[3, 0, 4]`，noda以及edge的局部编号会发生改变。
 > 
 
-### 网格实体之间的关系
+#### 网格实体之间的关系
 
-#### face2cell
+##### face2cell
 
 同样是拿上面的例子。
 
@@ -293,7 +291,7 @@ face2cell = bm.array([
 与全局编号为 9 的 face(`face[9]=[7, 3]`) 相邻的两个 cell(`cell[1]=[6, 7, 3]`、`cell[5]=[4, 3, 7]`\)，故 `cell1`=1，`cell2`=5；
 该 face 在该 cell 的局部编号均为 0 ，故`local_face1`=`local_face2`=0
 
-#### cell2cell
+##### cell2cell
 
 `cell2cell`单元和单元的邻接关系，存储了每个单元的邻接单元编号，若单元存在边界边，则该边对应的邻接单元编号就存储该单元本身的编号。
 
@@ -315,13 +313,13 @@ face2cell = bm.array([
 >   三个位置依次对应：局部边 0、局部边 1、局部边 2；局部边顺序由单元顶点排列**规定**预先定义。
 >
 
-#### cell2edge
+##### cell2edge
 
 `cell2edge[i]`存储单元`cell[i]`的边的全局编号，元素顺序为按照边在该单元的局部编号排。
 
-# 三、FEALPy 网格模块的使用方法
+## 三、FEALPy 网格模块的使用方法
 
-## （1）生成网格
+### 1. 生成网格
 
 举例，我们想要用三角形网格。 在网格模块中，可以直接导入所需网格类型。
 
@@ -335,7 +333,7 @@ from fealpy.mesh import TriangleMesh
 
 2. `boxmesh = TriangleMesh.from_box([-1, 1, -1, 1], nx=5, ny=5) # 通过类方法构造特殊区域的网格` 
 
-## （2）可视化网格
+### 2. 可视化网格
 
 基于 **matplotlib** 的可视化分为可选的两个方面：
 
@@ -358,9 +356,9 @@ plt.show()
     <img src="https://github.com/You-yj/markdown_photo/blob/main/fealpy%E7%BD%91%E6%A0%BC%E5%9F%BA%E7%A1%80_photo/image%203.png?raw=true" width="350" />
 </div>
 
-## （3）基本信息获取
+### 3. 基本信息获取
 
-### 获取网格实体数组与计数
+#### 获取网格实体数组与计数
 
 ```Python
 import matplotlib.pyplot as plt
@@ -410,7 +408,7 @@ cell = [[2 3 0]
 NN: 4 NE: 5 NF: 5 NC: 2
 ```
 
-### 获取网格实体重心 
+#### 获取网格实体重心 
 
 对于三角形网格
 
@@ -436,7 +434,7 @@ be: [[0.  0.5]
      [1.  0.5]]
 ```
 
-### 获取网格实体切向与法向
+#### 获取网格实体切向与法向
 
 - **切向**（`mesh.edge_tangent()`）：切向是指沿着网格边本身的方向向量。对于条连接顶点 $v_i$ 和 $v_j$ 的边，其切向量通常计算为终点减去起点，即 $\vec t = v_j - v_i$
 
@@ -481,7 +479,7 @@ un = [[-1.         -0.        ]
       [ 1.         -0.        ]]
 ```
 
-### 获取网格实体测度
+#### 获取网格实体测度
 
 - 边的测度：`mesh.entity_measure('edge')`
 
@@ -503,7 +501,7 @@ h = [1.         1.         1.41421356 1.         1.        ]
 area = [0.5 0.5]
 ```
 
-### 获取网格实体上的积分公式
+#### 获取网格实体上的积分公式
 
 在有限元分析（FEA）和计算几何中，网格实体上的积分公式通常指：构造用于数值积分的积分点和权重。下面的 `integrator` 就是用来生成这些积分公式的工具。
 
@@ -513,7 +511,7 @@ fqf = mesh.integrator(3, 'face') # 面（在 2D 中通常等价于 edge）上的
 eqf = mesh.integrator(3, 'edge') # 边上的 3 次积分公式
 ```
 
-### 获取网格实体的邻接关系
+#### 获取网格实体的邻接关系
 
 在网格处理（特别是有限元分析或计算几何库，如 PyMesh、MFEM、FEniCS 等）中，“邻接关系” 描述的是网格中不同几何实体（节点、边、面/单元）之间的连接或归属关系。简单来说，就是“谁和谁挨着”、“谁属于谁”。
 
@@ -583,7 +581,7 @@ cell2cell = [[1 0 0]
              [0 1 1]]
 ```
 
-### 获取网格实体的边界标记
+#### 获取网格实体的边界标记
 
 ```Python
 isBdNode = mesh.boundary_node_flag()
@@ -625,7 +623,7 @@ fidx = [0 1 3 4]
 cidx = [0 1]
 ```
 
-### 获取网格实体上的插值点
+#### 获取网格实体上的插值点
 
 - 插值点的**全局编号**和**局部编号**
 
