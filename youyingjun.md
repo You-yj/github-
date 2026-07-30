@@ -440,11 +440,7 @@ $$
 
 因此，**下一篇**，我们会将目光聚焦于这类特殊但极为重要的电磁场——**时谐电磁场（简称时谐场）**。我们利用一个核心手段，将含时的 Maxwell 方程组化为频域中的复数方程（不含时的），为后续求解问题铺平道路。
 
-#  参考资料
-
 # 参考资料
-
-
 
 1. Maxwell J C. A dynamical theory of the electromagnetic field[J]. Philosophical Transactions of the Royal Society of London, 1865, 155:459-512.
 2. Jackson J D. Classical Electrodynamics[M]. 3rd ed. New York: John Wiley & Sons, 1999.
@@ -455,21 +451,22 @@ $$
 # 附录 I
 
 <div align="center">
-    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/A.png?raw=true" width="340" />
-    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/B.png?raw=true" width="340" />
-    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/C.png?raw=true" width="340" />
+    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/A.png?raw=true" width="320" />
+    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/B.png?raw=true" width="320" />
+    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/C.png?raw=true" width="320" />
 </div>
 
 <div align="center">
-    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/D.png?raw=true" width="340" />
-    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/E.png?raw=true" width="340" />
-    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/F.png?raw=true" width="340" />
+    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/D.png?raw=true" width="320" />
+    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/E.png?raw=true" width="320" />
+    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/F.png?raw=true" width="320" />
 </div>
 
 <div align="center">
-    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/G.png?raw=true" width="542" />
-    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/H.png?raw=true" width="500" />
+    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/G.png?raw=true" width="442" />
+    <img src="https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/H.png?raw=true" width="400" />
 </div>
+
 
 ![总.png](https://github.com/You-yj/markdown_photo/blob/main/%E6%9C%80%E7%BE%8E%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B9%8B%E4%B8%80%EF%BC%9AMaxwell%E6%96%B9%E7%A8%8B%E7%BB%84/%E5%8E%9F%E7%A8%BF%E6%88%AA%E5%9B%BE/%E6%80%BB.png?raw=true)
 
