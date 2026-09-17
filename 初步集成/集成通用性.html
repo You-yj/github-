@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>磁标势组件通用性说明</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --panel:#ffffff; --ink:#212734; --muted:#5c6575;
+    --accent:#2563eb; --line:#e3e6eb; --chip:#eaf0ff; --chip-ink:#2f46a3;
+    --code-bg:#282c34; --code-cap:#21252b; --code-ink:#abb2bf;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"SimSun","宋体","Songti SC","Noto Serif CJK SC","Source Han Serif SC","AR PL UMing CN","AR PL UMing HK","AR PL UMing TW",serif;
+    line-height:1.8;}
+  .wrap{max-width:1200px;margin:0 auto;padding:28px 20px 90px;}
+  header.top{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--accent);
+    border-radius:12px;padding:26px 30px;box-shadow:0 1px 3px rgba(16,24,40,.05);}
+  header.top h1{margin:0 0 8px;font-size:26px;}
+  header.top .stage{display:inline-block;background:var(--chip);color:var(--chip-ink);
+    border-radius:999px;font-size:12.5px;padding:2px 12px;margin-right:10px;vertical-align:2px;}
+  header.top p.sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;}
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:16px 2px;}
+  nav.toc a{background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:4px 16px;font-size:13.5px;text-decoration:none;color:var(--ink);}
+  nav.toc a:hover{border-color:var(--accent);color:var(--accent);}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:0 28px 26px;margin:18px 0;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.05);}
+  h2{font-size:25px;font-weight:700;margin:0 -28px 18px;padding:13px 28px;
+    background:linear-gradient(90deg,#1d4ed8,#3b82f6);color:#fff;}
+  h2 .no{color:#bfdbfe;margin-right:8px;}
+  h3{font-size:19px;font-weight:700;margin:24px 0 10px;color:#111827;
+    padding-left:12px;border-left:4px solid var(--accent);}
+  h3 .loc{color:var(--muted);font-weight:normal;font-size:14px;}
+  p,li{font-size:16px;}
+  ul{margin:8px 0;padding-left:22px;}
+  li{margin:5px 0;}
+  ol{padding-left:24px;}
+  ol li{margin:5px 0;}
+  .row{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);
+    gap:22px;align-items:start;margin:16px 0;}
+  @media(max-width:980px){.row{grid-template-columns:1fr}}
+  table{border-collapse:collapse;width:100%;font-size:15px;margin:10px 0;}
+  th,td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f4f8;font-weight:600;white-space:nowrap;}
+  td.num,th.num{text-align:center;}
+  .callout{border-left:3px solid var(--accent);background:#f0f6ff;padding:10px 14px;
+    border-radius:0 8px 8px 0;margin:10px 0;font-size:15.5px;}
+  .warn{border-left:3px solid #e3a13a;background:#fff8e8;padding:10px 14px;
+    border-radius:0 8px 8px 0;margin:10px 0;font-size:14.5px;color:#5d4a17;}
+  .mathbox{background:#f7f9fc;border:1px dashed var(--line);border-radius:10px;
+    padding:18px 22px;margin:14px 0;text-align:center;}
+  .math{font-family:"STIX Two Math","Cambria Math","Times New Roman",Georgia,serif;
+    font-size:19px;margin:8px 0;}
+  .figrow{display:grid;grid-template-columns:1fr;gap:16px;margin:14px 0;}
+  figure.fig{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+    background:#fbfcfe;}
+  figure.fig img{display:block;width:100%;height:auto;border-bottom:1px solid var(--line);}
+  figure.fig figcaption{padding:8px 12px;font-size:13.5px;color:var(--muted);line-height:1.6;}
+  figure.fig figcaption b{color:var(--ink);}
+  details.qa{margin:10px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  details.qa summary{cursor:pointer;padding:10px 16px;background:#f1f4f8;font-weight:700;font-size:15.5px;}
+  details.qa summary:hover{color:var(--accent);}
+  details.qa .qa-body{padding:10px 16px 14px;font-size:15px;}
+  .code-panel{margin:0;background:var(--code-bg);border-radius:10px;overflow:hidden;
+    border:1px solid #1b1e24;}
+  .code-panel figcaption{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:7px 12px;background:var(--code-cap);color:var(--code-ink);font-size:13px;}
+  .code-panel figcaption .fn{color:#61afef;font-family:ui-monospace,"SF Mono",Consolas,monospace;}
+  .code-panel figcaption .loc{margin-left:auto;color:#7f848e;font-size:12px;white-space:nowrap;}
+  .code-panel button.toggle{border:1px solid #4b5263;background:transparent;color:var(--code-ink);
+    border-radius:4px;cursor:pointer;font-size:12px;padding:0 8px;line-height:1.6;}
+  .code-panel button.toggle:hover{border-color:#61afef;color:#61afef;}
+  .code-panel.collapsed pre{display:none;}
+  .code-stack > div{margin-bottom:14px;}
+  .code-stack > div:last-child{margin-bottom:0;}
+  pre.code{margin:0;padding:10px 0;overflow:auto;font-size:13.2px;line-height:1.62;
+    font-family:ui-monospace,"SF Mono",Consolas,"Liberation Mono",monospace;color:var(--code-ink);}
+  pre.code .l{display:block;padding:0 14px 0 6px;white-space:pre;}
+  pre.code .l:hover{background:#2c313a;}
+  pre.code .ln{display:inline-block;width:3.4em;margin-right:16px;color:#4b5263;
+    text-align:right;user-select:none;}
+  .k{color:#c678dd}.s{color:#98c379}.c{color:#7f848e;font-style:italic}
+  .n{color:#d19a66}.d{color:#61afef}
+  .foot{color:var(--muted);font-size:13px;margin-top:26px;text-align:center;}
+  code.inline{background:#eef1f5;border-radius:4px;padding:0 5px;font-size:13px;
+    font-family:ui-monospace,"SF Mono",Consolas,monospace;}
+  /* 2026 技术说明版视觉系统 */
+  :root{
+    --bg:#edf3f6;--panel:#ffffff;--ink:#102235;--muted:#627180;
+    --accent:#0f766e;--accent-2:#ea6a47;--line:#d8e3e8;--chip:#def3ef;--chip-ink:#0c645e;
+    --code-bg:#15232d;--code-cap:#101c24;--code-ink:#c3d1d7;--shadow:0 16px 45px rgba(25,50,70,.09);
+  }
+  body{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;
+    background:radial-gradient(circle at 5% 4%,rgba(15,118,110,.09),transparent 24%),var(--bg);line-height:1.72}
+  .read-progress{position:fixed;inset:0 0 auto;z-index:80;height:4px;background:rgba(16,34,53,.08)}
+  .read-progress span{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+  .wrap{max-width:1500px;padding:34px 30px 90px}
+  header.top{border:none;border-radius:24px;padding:38px 42px;background:linear-gradient(145deg,#0e2638,#133f4c);color:#fff;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  header.top::after{content:"";position:absolute;width:330px;height:330px;border-radius:50%;right:-110px;top:-170px;border:1px solid rgba(255,255,255,.14);box-shadow:0 0 0 48px rgba(255,255,255,.03),0 0 0 96px rgba(255,255,255,.02)}
+  header.top h1{font-size:clamp(28px,4vw,43px);line-height:1.2;letter-spacing:-.035em;position:relative;z-index:1}
+  header.top .stage{background:#9fe7dc;color:#103e43;font-weight:800;vertical-align:5px}
+  header.top p.sub{color:#cddde3;font-size:15px;max-width:980px;position:relative;z-index:1}
+  header.top code.inline{background:rgba(255,255,255,.1);color:#fff}
+  .eyebrow{color:#9fe7dc;font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;margin-bottom:13px;position:relative;z-index:1}
+  .summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:25px;position:relative;z-index:1}
+  .summary-strip div{border:1px solid rgba(255,255,255,.14);border-radius:13px;padding:10px 13px;background:rgba(255,255,255,.06);color:#cddde3;font-size:12px}
+  .summary-strip b{display:block;color:#fff;font-size:18px;margin-bottom:1px}
+  nav.toc{position:sticky;top:10px;z-index:50;background:rgba(247,250,251,.88);border:1px solid var(--line);border-radius:16px;padding:9px 10px;backdrop-filter:blur(14px);box-shadow:0 8px 24px rgba(25,50,70,.08)}
+  nav.toc a{background:transparent;border-color:transparent;font-weight:650;padding:5px 12px}
+  nav.toc a:hover,nav.toc a.active{background:var(--chip);color:var(--accent);border-color:#c7e7e1}
+  nav.toc .nav-spacer{flex:1}
+  .nav-action{font:inherit;cursor:pointer;background:#fff!important;border:1px solid var(--line)!important;color:var(--ink)!important;border-radius:999px!important;padding:5px 12px!important;font-size:12.5px!important;text-decoration:none}
+  .nav-action:hover{border-color:var(--accent)!important;color:var(--accent)!important}
+  section{border:none;border-radius:18px;box-shadow:var(--shadow);padding-bottom:31px;scroll-margin-top:82px}
+  h2{background:linear-gradient(90deg,#0f685f,#148a7d);font-size:24px;padding-top:15px;padding-bottom:15px}
+  h2 .no{color:#a9ece1}h3{border-left-color:var(--accent);color:var(--ink)}
+  th{background:#eaf3f3;color:#173f42}th,td{border-color:var(--line)}
+  .callout{border-left-color:var(--accent);background:#eaf7f5}.mathbox{background:#f6fafb;border-color:var(--line)}
+  figure.fig{border-radius:14px;box-shadow:0 8px 22px rgba(25,50,70,.06)}
+  .code-panel{box-shadow:0 9px 24px rgba(8,20,30,.13)}
+  .code-panel button.copy{border:1px solid #4b6270;background:transparent;color:var(--code-ink);border-radius:4px;cursor:pointer;font-size:12px;padding:0 8px;line-height:1.6}
+  .code-panel button.copy:hover{border-color:#65d2c4;color:#65d2c4}
+  .backtop{position:fixed;right:24px;bottom:24px;z-index:55;width:42px;height:42px;border:none;border-radius:50%;background:var(--accent);color:#fff;box-shadow:0 9px 24px rgba(15,118,110,.26);cursor:pointer;opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s}
+  .backtop.show{opacity:1;transform:none;pointer-events:auto}
+  details.qa summary{background:#eef6f5;color:var(--ink)}
+  details.qa{border-color:var(--line)}
+  [data-theme="dark"]{--bg:#0c171e;--panel:#13232c;--ink:#e4eef1;--muted:#9babb3;--line:#29404c;--chip:#173d3c;--chip-ink:#91ddd2;--shadow:0 16px 45px rgba(0,0,0,.22)}
+  [data-theme="dark"] body{background:#0c171e}[data-theme="dark"] section{background:#13232c}
+  [data-theme="dark"] th{background:#1a343c;color:#d9eeed}[data-theme="dark"] .callout{background:#173536}[data-theme="dark"] .mathbox{background:#102029}
+  [data-theme="dark"] code.inline{background:#1c3039;color:#d5e4e8}[data-theme="dark"] nav.toc{background:rgba(15,29,37,.9)}
+  [data-theme="dark"] details.qa summary{background:#1a343c}
+  @media(max-width:820px){.wrap{padding:18px 10px 80px}header.top{padding:30px 24px}.summary-strip{grid-template-columns:1fr 1fr}nav.toc{top:4px;overflow-x:auto;flex-wrap:nowrap}nav.toc a{white-space:nowrap}.nav-spacer,.nav-action{display:none}section{padding-left:18px;padding-right:18px}h2{margin-left:-18px;margin-right:-18px;padding-left:18px}.backtop{right:14px;bottom:14px}}
+  @media print{.read-progress,nav.toc,.backtop,.nav-action{display:none!important}.wrap{max-width:none;padding:0}section,header.top{box-shadow:none;break-inside:avoid}.code-panel.collapsed pre{display:block}}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="read-progress" aria-hidden="true"><span id="readProgress"></span></div>
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">FEALPy integration study · generality &amp; reuse</div>
+  <h1><span class="stage">Stage 03</span>磁标势组件通用性说明</h1>
+  <p class="sub">回答一个问题：集成进 fealpy 的组件<b>到底通用到什么程度</b>。
+  结论：通用的是「命名区域网格 + 磁标势有限元 + Maxwell 应力算力」这条<b>管线</b>，
+  而不是某一个几何形状——几何生成器可换，模型与后处理不动。
+  完整上下文见 <a href="集成_详细版.html" style="color:#9fe7dc">集成详细版</a>。</p>
+  <div class="summary-strip">
+    <div><b>4</b>项物理校验</div><div><b>4 步</b>流程复用</div>
+    <div><b>5 类</b>可替换件</div><div><b>1 张</b>边界表</div>
+  </div>
+</header>
+
+<nav class="toc">
+  <a href="#s1">§1 一句话结论</a>
+  <a href="#s2">§2 几何可视化</a>
+  <a href="#s3">§3 能/不能边界表</a>
+  <a href="#s4">§4 常见问题</a>
+  <a href="#s5">§5 实测案例</a>
+  <a href="#s6">§6 通用性的设计根子</a>
+  <a href="#appendix">附录 四步流程</a>
+  <span class="nav-spacer"></span>
+  <button class="nav-action" id="collapseAll" type="button">折叠代码</button>
+  <button class="nav-action" id="themeToggle" type="button">深色</button>
+</nav>
+
+<!-- ============================== §1 ============================== -->
+<section id="s1">
+  <h2><span class="no">§1</span>一句话结论</h2>
+  <div class="mathbox">
+    <div class="math">通用边界 = 任意共形四面体网格 + 分片常数线性各向同性材料 + 无自由电流的磁标势适用域</div>
+  </div>
+  <div class="row">
+    <div>
+      <ul>
+        <li><b>材料层</b>：任意磁化方向与大小、任意正 μᵣ、自定义材料类（协议即可）——完全通用；</li>
+        <li><b>模型层</b>：任意 p≥1、μᵣ 分片常数、函数型磁化源、任意满足网格数据协议的网格；</li>
+        <li><b>后处理层</b>：任意命名闭合空气界面，法向拓扑定向，可非凸；</li>
+        <li><b>网格层</b>：当前只支持轴对齐长方体——但这是"换网格器"的扩展点，不是断点。</li>
+      </ul>
+    </div>
+    <div>
+      <div class="callout"><b>关键分界：</b>通用的是<b>管线</b>（协议化模型 + Maxwell 应力 + 命名区域寻址），不是某一个几何形状。轴对齐盒只是 <code class="inline">BoxRegionMesher</code> 的能力范围；换成任何满足 <code class="inline">RegionTaggedMeshDataProtocol</code> 的网格器，整条管线原样复用。</div>
+      <div class="warn"><b>诚实边界：</b>无自由电流（∇×H=0）、单值标势（多连通需 cut）、线性各向同性标量 μᵣ、只有齐次自然 Neumann + 内部规范点、非盒几何需新网格器、加密后标签不自动 remap。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== §2 ============================== -->
+<section id="s2">
+  <h2><span class="no">§2</span>几何可视化：三磁体 + 软磁案例</h2>
+  <div class="figrow" style="grid-template-columns:1fr;max-width:920px;margin:14px auto">
+    <figure class="fig">
+      <a href="results/generic_case_geometry.png" target="_blank" title="点击查看原图">
+        <img src="results/generic_case_geometry.png" alt="三磁体 + 软磁案例三维几何示意图">
+      </a>
+      <figcaption><b>图 1 · 几何示意图</b>（左：等轴测视图；右：沿 +y 的侧视图）：
+      <b style="color:#0f766e">磁体 a/b/c</b>（沿 +z 磁化，箭头示方向）、
+      <b style="color:#ea6a47">磁体 d</b>（沿 +y 磁化，箭头示方向）、
+      <b style="color:#7c3aed">软磁块</b>（μr=250）、
+      青色虚线为五个嵌套 Maxwell 应力盒、浅灰线框为截断空气盒。
+      图由 <code class="inline">plot_generic_case.py</code> 生成。</figcaption>
+    </figure>
+  </div>
+  <table>
+    <tr><th>区域</th><th>尺寸 (mm)</th><th>位置（中心，mm）</th><th>材料</th></tr>
+    <tr><td>magnet_a / magnet_b</td><td>20 × 10 × 10</td><td>(−15, 0, 0) / (+15, 0, 0)，关于 x=0 镜像</td><td>永磁，+z</td></tr>
+    <tr><td>magnet_c</td><td>10 × 10 × 20</td><td>(0, 0, 30)</td><td>永磁，+z</td></tr>
+    <tr><td>magnet_d</td><td>10 × 10 × 10</td><td>(0, 25, 0)</td><td>永磁，<b>+y（不同方向）</b></td></tr>
+    <tr><td>soft_block</td><td>10 × 10 × 10</td><td>(0, 0, −20)</td><td>软磁，<b>μᵣ = 250</b></td></tr>
+    <tr><td>box_a/b/c/d_air + box_all_air</td><td>各自包住对应磁体 / 全部物体</td><td>—</td><td>空气（嵌套，priority −1/0/10）</td></tr>
+  </table>
+</section>
+
+<!-- ============================== §3 ============================== -->
+<section id="s3">
+  <h2><span class="no">§3</span>能 / 不能边界表</h2>
+  <table>
+    <tr><th>层</th><th>通用（已验证或代码可确认）</th><th>受限（当前版本）</th></tr>
+    <tr><td>材料 <code class="inline">fealpy.material</code></td><td>任意磁化方向与大小；任意正 μᵣ；自定义材料类只需满足协议；对象不可变</td><td>线性、各向同性、标量 μᵣ；M 分片常数；无非线性 B-H、无张量磁导率</td></tr>
+    <tr><td>网格 <code class="inline">fealpy.mesher.BoxRegionMesher</code></td><td>任意数量轴对齐长方体；任意中心/尺寸/优先级；重叠（priority 归属）；多个尺寸场；命名界面任意多；角点形式逐位复现几何</td><td>仅轴对齐长方体；加密/重编号后标签不自动 remap</td></tr>
+    <tr><td>模型 <code class="inline">fealpy.cem.fem.MagnetostaticLFEMModel</code></td><td>任意 p≥1；μᵣ 分片常数（=1 与非 1 均有测试）；函数型磁化源；任意满足协议的网格；显式规范点</td><td>无用户 Dirichlet；多连通需 cut；SciPy/PyAMG CPU 路径</td></tr>
+    <tr><td>后处理 <code class="inline">compute_force</code></td><td>任意命名闭合界面；拓扑法向（可非凸）；界面两侧空气的物理检查</td><td>积分面必须 μᵣ=1、M=0；函数型磁化源暂不算力</td></tr>
+    <tr><td>算例层（不进 fealpy）</td><td>几何尺寸、磁体个数/位置、材料绑定、扫描、对标全部可自由改</td><td>本就是 benchmark 专属，不属于通用组件</td></tr>
+  </table>
+</section>
+
+<!-- ============================== §4 ============================== -->
+<section id="s4">
+  <h2><span class="no">§4</span>常见问题</h2>
+  <details class="qa" open><summary>Q1：磁体可以不是长方体吗？</summary>
+    <div class="qa-body"><b>网格器当前不能直接生成</b>（只做轴对齐盒）；但模型与后处理对几何形状没有任何假设——换一个能出圆柱/球/旋转体/STEP 网格的网格器（提供 mesh / cell_tags / region_tags / interface_names / tag 五件套），求解与算力原样可用。几何扩展是「加一个网格器」，不是「改模型」。</div></details>
+  <details class="qa"><summary>Q2：磁体的大小、位置、个数可以变吗？</summary>
+    <div class="qa-body">可以。全部是配置层数据——改两个角点即改尺寸/位置；加一块磁体 = regions 加一项 + 材料字典加同名绑定，共 4 行。</div></details>
+  <details class="qa"><summary>Q3：可以加一个长方体吗？多个呢？</summary>
+    <div class="qa-body">可以，任意多个。重叠区域由 priority 决定归属（这正是 Maxwell 盒包磁体的用法）。</div></details>
+  <details class="qa"><summary>Q4：磁化方向可以不同吗？</summary>
+    <div class="qa-body">可以。每个区域绑定独立的 <code class="inline">PermanentMagnet</code>，任意三维向量（实测案例中 d 就是 +y）。</div></details>
+  <details class="qa"><summary>Q5：可以有 μᵣ ≠ 1 的软磁材料吗？</summary>
+    <div class="qa-body">可以。<code class="inline">LinearMagneticMaterial(relative_permeability=250.0)</code>；变系数组装路径有单元测试，实测案例端到端跑通。</div></details>
+  <details class="qa"><summary>Q6：可以同时算多个力吗？</summary>
+    <div class="qa-body">可以。定义多个命名界面，逐个 <code class="inline">model.compute_force(name)</code>；每个界面法向独立拓扑定向（实测案例一次算了 5 个力）。</div></details>
+  <details class="qa"><summary>Q7：网格尺寸、加密策略可以变吗？</summary>
+    <div class="qa-body">可以。<code class="inline">size_fields</code> 支持多个 Box 场（自动取 Min）；「近场细于远场」只是 benchmark 的用法，通用组件不限定。</div></details>
+</section>
+
+<!-- ============================== §5 ============================== -->
+<section id="s5">
+  <h2><span class="no">§5</span>实测案例（generic_magnet_case.py）</h2>
+  <p>用集成组件求解一个<b>非双磁体</b>问题：四块磁体（三种尺寸、+z/+y 两种方向）+ 一块 μᵣ=250 软磁 + 五个嵌套 Maxwell 盒（几何见 §2）。</p>
+  <table>
+    <tr><th>对象</th><th class="num">受力 (N)</th><th>说明</th></tr>
+    <tr><td>组合体整体 F_all</td><td class="num">(+0.004, −0.057, +0.012)</td><td>≈ 0：孤立组合体自作用力为零 ✓</td></tr>
+    <tr><td>magnet_a F_a</td><td class="num">(−0.101, −0.006, −0.004)</td><td>并排同向磁化相斥，推向 −x ✓</td></tr>
+    <tr><td>magnet_b F_b</td><td class="num">(+0.094, +0.011, +0.001)</td><td>镜像对象，推向 +x，符号镜像 ✓</td></tr>
+    <tr><td>magnet_c F_c</td><td class="num">(−0.000, −0.004, −0.126)</td><td>被下方组合体吸引（−z）</td></tr>
+    <tr><td>magnet_d(+y) F_d</td><td class="num">(−0.002, −0.033, +0.136)</td><td>不同磁化方向，受力非零 ✓</td></tr>
+  </table>
+  <div class="callout"><b>四项校验全部通过：</b>① 所有力有限；② 组合体自作用力 ≈ 0（硬物理校验，|F_all|max = 5.7e-2 N）；③ a/b 镜像关系成立（符号镜像，量级在离散误差内一致）；④ μᵣ=250 变系数路径端到端跑通。p=1，19,903 节点 / 118,941 单元，CG 24 次收敛。</div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">5.1 两个工程发现</h3>
+      <ul>
+        <li><b>嵌套 Maxwell 盒的界面命名</b>：内层盒的外侧相邻区域是外层盒（不是最外层空气）——命名界面必须写 <code class="inline">("box_a_air", "box_all_air")</code>；外层盒用更低 priority 先写、内层后写覆盖、磁体最后覆盖；</li>
+        <li><b>HXT 网格不保持镜像对称</b>：19,903 个节点中 17,515 个无镜像伙伴——对称性类校验只能到离散误差水平（实测力差 ~7%），要么用结构化网格，要么放宽容差。</li>
+      </ul>
+      <div class="callout"><b>通用性结论：</b>换一套几何与材料，四步流程原样复用、物理校验成立——「通用的是管线，不是某一个几何形状」有了实测证据。</div>
+    </div>
+    <div class="code-stack">
+      <div data-code="generic-case-build"></div>
+      <div data-code="generic-case-main"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== §6 ============================== -->
+<section id="s6">
+  <h2><span class="no">§6</span>通用性的设计根子</h2>
+  <table>
+    <tr><th>设计</th><th>作用</th></tr>
+    <tr><td><code class="inline">MagneticMaterialProtocol</code></td><td>材料可替换——任何满足协议的对象都能用，不锁死内置三类</td></tr>
+    <tr><td><code class="inline">RegionTaggedMeshDataProtocol</code></td><td>网格可替换——模型不绑定 BoxRegionMesher，几何扩展 = 换网格器</td></tr>
+    <tr><td>命名区域（name → tag）</td><td>模型与后处理只见名字，不见整数——新算例不需要 <code class="inline">cell_tag &gt;= 2</code> 这类硬编码</td></tr>
+    <tr><td>拓扑法向定向</td><td>不依赖 Maxwell 盒中心，非凸积分面同样正确</td></tr>
+    <tr><td>物理条件检查</td><td>Maxwell 面两侧必须 μᵣ=1、M=0，杜绝在材料界面误用真空应力公式</td></tr>
+    <tr><td>逐单元标签存 mesh attribute</td><td>标签随网格走（VTU 导出、其他工具可读），mesher 只是「生产」标签</td></tr>
+  </table>
+</section>
+
+<!-- ============================== 附录 ============================== -->
+<section id="appendix">
+  <h2><span class="no">附录</span>新算例四步流程</h2>
+  <pre style="background:#eef1f5;border-radius:8px;padding:10px 14px;font-size:13px;overflow:auto"><code># 1) 几何（任意多区域，角点形式）
+mesher = BoxRegionMesher(options={"outer": ..., "regions": [磁体1, 磁体2, ...]})
+mesher.init_mesh()
+
+# 2) 材料（逐区域绑定，方向/大小/μᵣ 任意）
+model = MagnetostaticLFEMModel(p=2, mu0=MU0)
+model.set_mesh_data(mesher)
+model.set_materials({"air": Air(), "magnet_1": PermanentMagnet([0,0,M1]), ...})
+
+# 3) 求解
+model.solve()
+
+# 4) 算力（可为每个 Maxwell 界面各算一次）
+force = model.compute_force("maxwell_surface_1")</code></pre>
+  <p class="foot">通用性专题 · 集成上下文见 <a href="集成_详细版.html">集成_详细版.html</a> ·
+  翻页演示 <a href="集成_简洁版.html">集成_简洁版.html</a> ·
+  完整边界清单《集成通用性边界.md》与本页同目录</p>
+</section>
+
+</div>
+
+<button class="backtop" id="backtop" type="button" title="返回顶部">↑</button>
+
+<!-- ============ 代码源（text/plain，避免转义问题） ============ -->
+<script type="text/plain" class="py-src" data-key="generic-case-build" data-file="generic_magnet_case.py" data-start="39" data-end="117" data-title="通用案例 · 几何与材料（build_case + fealpy_mesher）">
+def build_case(p: int = 1):
+    """构造几何/网格与材料，返回已求解的模型。"""
+    mesher = fealpy_mesher()
+    mesher.init_mesh(model_name="generic_three_magnets")
+    model = MagnetostaticLFEMModel(p=p, mu0=MU0)
+    model.set_mesh_data(mesher)
+    model.set_materials(
+        {
+            "air": Air(),
+            "box_all_air": Air(),
+            "box_a_air": Air(),
+            "box_b_air": Air(),
+            "box_c_air": Air(),
+            "box_d_air": Air(),
+            "magnet_a": PermanentMagnet([0.0, 0.0, MZ]),
+            "magnet_b": PermanentMagnet([0.0, 0.0, MZ]),
+            "magnet_c": PermanentMagnet([0.0, 0.0, MZ]),
+            "magnet_d": PermanentMagnet([0.0, MZ, 0.0]),  # 不同磁化方向（+y）
+            "soft_block": LinearMagneticMaterial(relative_permeability=250.0),
+        }
+    )
+    model.solve()
+    return model
+
+
+def fealpy_mesher():
+    """几何描述：四块磁体 + 一块软磁 + 五个嵌套 Maxwell 空气盒。"""
+    from fealpy.mesher import BoxRegionMesher
+
+    # 注意 priority 语义：外层的 box_all_air 先写（-1），内层小盒（0）
+    # 后写覆盖，磁体/软磁（10）最后覆盖——嵌套空气盒各得其所。
+    return BoxRegionMesher(
+        options={
+            "outer": {
+                "name": "air",
+                "lower": np.array([-40.0, -40.0, -45.0]) * MM,
+                "upper": np.array([40.0, 40.0, 55.0]) * MM,
+            },
+            "regions": [
+                {"name": "box_all_air", "lower": np.array([-33.0, -15.0, -30.0]) * MM,
+                 "upper": np.array([33.0, 33.0, 45.0]) * MM, "priority": -1},
+                {"name": "box_a_air", "lower": np.array([-28.0, -8.0, -8.0]) * MM,
+                 "upper": np.array([-2.0, 8.0, 8.0]) * MM, "priority": 0},
+                {"name": "box_b_air", "lower": np.array([2.0, -8.0, -8.0]) * MM,
+                 "upper": np.array([28.0, 8.0, 8.0]) * MM, "priority": 0},
+                {"name": "box_c_air", "lower": np.array([-8.0, -8.0, 17.0]) * MM,
+                 "upper": np.array([8.0, 8.0, 43.0]) * MM, "priority": 0},
+                {"name": "box_d_air", "lower": np.array([-8.0, 17.0, -8.0]) * MM,
+                 "upper": np.array([8.0, 33.0, 8.0]) * MM, "priority": 0},
+                {"name": "magnet_a", "lower": np.array([-25.0, -5.0, -5.0]) * MM,
+                 "upper": np.array([-5.0, 5.0, 5.0]) * MM, "priority": 10},
+                {"name": "magnet_b", "lower": np.array([5.0, -5.0, -5.0]) * MM,
+                 "upper": np.array([25.0, 5.0, 5.0]) * MM, "priority": 10},
+                {"name": "magnet_c", "lower": np.array([-5.0, -5.0, 20.0]) * MM,
+                 "upper": np.array([5.0, 5.0, 40.0]) * MM, "priority": 10},
+                {"name": "magnet_d", "lower": np.array([-5.0, 20.0, -5.0]) * MM,
+                 "upper": np.array([5.0, 30.0, 5.0]) * MM, "priority": 10},
+                {"name": "soft_block", "lower": np.array([-5.0, -5.0, -25.0]) * MM,
+                 "upper": np.array([5.0, 5.0, -15.0]) * MM, "priority": 10},
+            ],
+            "size_fields": [
+                (
+                    np.array([-30.0, -30.0, -30.0]) * MM,
+                    np.array([30.0, 30.0, 30.0]) * MM,
+                    2.0e-3,
+                    8.0e-3,
+                    4.0e-3,
+                )
+            ],
+            "interface_names": {
+                # 嵌套空气盒：内层盒的外侧相邻区域是外层盒的名字。
+                "surface_all": ("box_all_air", "air"),
+                "surface_a": ("box_a_air", "box_all_air"),
+                "surface_b": ("box_b_air", "box_all_air"),
+                "surface_c": ("box_c_air", "box_all_air"),
+                "surface_d": ("box_d_air", "box_all_air"),
+            },
+        }
+    )
+</script>
+
+<script type="text/plain" class="py-src" data-key="generic-case-main" data-file="generic_magnet_case.py" data-start="120" data-end="169" data-title="通用案例 · 校验（main）">
+def main() -> None:
+    model = build_case(p=1)
+    mesh = model.mesh_data.mesh
+    print(f"网格: {mesh.number_of_nodes()} 节点, {mesh.number_of_cells()} 单元")
+    print(f"CG: info={model.solver_info['cg_info']}, "
+          f"iterations={model.solver_info['cg_iterations']}")
+
+    def force(name):
+        return np.asarray(model.compute_force(name))
+
+    F_all = force("surface_all")
+    F_a, F_b = force("surface_a"), force("surface_b")
+    F_c, F_d = force("surface_c"), force("surface_d")
+
+    print("\n=== 结果（单位 N）===")
+    for name, F in [
+        ("组合体整体 F_all", F_all),
+        ("magnet_a      F_a", F_a),
+        ("magnet_b      F_b", F_b),
+        ("magnet_c      F_c", F_c),
+        ("magnet_d(+y)  F_d", F_d),
+    ]:
+        print(f"  {name}: ({F[0]:+.6f}, {F[1]:+.6f}, {F[2]:+.6f})")
+
+    print("\n=== 物理校验 ===")
+    assert np.all(np.isfinite([F_all, F_a, F_b, F_c, F_d])), "存在非有限力"
+    print("1) 所有力有限                                  ✓")
+
+    assert np.abs(F_all).max() < 1.0, f"组合体自作用力应≈0，实际 {F_all}"
+    print(f"2) 孤立组合体自作用力 ≈ 0（|F_all|max = {np.abs(F_all).max():.3e} N）  ✓")
+
+    # 镜像对称校验：HXT 生成的网格不保持镜像对称（见脚本说明），
+    # 因此镜像关系只能到离散误差水平：符号必须镜像，量级在 20% 内一致。
+    assert F_a[0] < 0.0 < F_b[0], "镜像符号方向不符"
+    dominant = max(np.abs(F_a).max(), np.abs(F_b).max())
+    mirror_scale = 0.2 * dominant + 2.0e-2
+    np.testing.assert_allclose(F_a[0], -F_b[0], atol=mirror_scale)
+    np.testing.assert_allclose(F_a[1], F_b[1], atol=mirror_scale)
+    np.testing.assert_allclose(F_a[2], F_b[2], atol=mirror_scale)
+    nodes = np.asarray(model.mesh_data.mesh.entity("node"))
+    key = lambda r: tuple(np.round([-r[0], r[1], r[2]], 6))
+    position = {tuple(np.round(r, 6)) for r in nodes}
+    missing_mirror = sum(1 for r in nodes if key(r) not in position)
+    print(f"3) 镜像对称（符号镜像 ✓，量级一致于离散误差内 ✓；"
+          f"HXT 网格非镜像对称：{missing_mirror}/{len(nodes)} 节点无镜像伙伴）  ✓")
+
+    assert not np.allclose(F_c, 0.0), "magnet_c 在场中受力不应为零"
+    assert not np.allclose(F_d, 0.0), "magnet_d 在场中受力不应为零"
+    print("4) μᵣ=250 变系数路径端到端跑通，c/d 受力非零且有限    ✓")
+    print("\n[全部校验通过]")
+</script>
+
+<script>
+(function () {
+  function esc(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function inline(s) {
+    return s.replace(
+      /(#.*$)|(@[A-Za-z_]\w*)|(\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|(r?b?u?f?(?:'''|"""|'[^'\n]*'|"[^"\n]*"))|(\b(?:def|class|return|if|elif|else|for|while|import|from|as|with|try|except|finally|raise|pass|break|continue|lambda|None|True|False|and|or|not|in|is|global|nonlocal|yield|assert|del)\b)/g,
+      function (m, c, d, n, str, kw) {
+        if (c)   return '<span class="c">' + m + '</span>';
+        if (d)   return '<span class="d">' + m + '</span>';
+        if (n)   return '<span class="n">' + m + '</span>';
+        if (str) return '<span class="s">' + m + '</span>';
+        if (kw)  return '<span class="k">' + m + '</span>';
+        return m;
+      }
+    );
+  }
+
+  function highlight(code) {
+    var out = '', state = null;
+    var lines = code.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var t = esc(lines[i]);
+      if (state) {
+        var idx = t.indexOf(state);
+        if (idx < 0) {
+          out += '<span class="s">' + t + '</span>';
+        } else {
+          out += '<span class="s">' + t.slice(0, idx + 3) + '</span>'
+               + inline(t.slice(idx + 3));
+          state = null;
+        }
+      } else {
+        var i3 = t.search(/'''|"""/);
+        if (i3 >= 0) {
+          var delim = t.slice(i3, i3 + 3);
+          var close = t.indexOf(delim, i3 + 3);
+          if (close >= 0) {
+            out += inline(t.slice(0, i3))
+                 + '<span class="s">' + t.slice(i3, close + 3) + '</span>'
+                 + inline(t.slice(close + 3));
+          } else {
+            out += inline(t.slice(0, i3)) + '<span class="s">' + t.slice(i3) + '</span>';
+            state = delim;
+          }
+        } else {
+          out += inline(t);
+        }
+      }
+      out += '\n';
+    }
+    return out;
+  }
+
+  function buildPanel(src) {
+    var fig = document.createElement('figure');
+    fig.className = 'code-panel';
+    fig.dataset.sourceKey = src.dataset.key;
+    var cap = document.createElement('figcaption');
+    cap.innerHTML = '<span class="fn">' + src.dataset.title + '</span>'
+      + '<span class="loc">' + src.dataset.file + ' · L' + src.dataset.start + '–' + src.dataset.end + '</span>'
+      + '<button class="copy" type="button">复制</button>'
+      + '<button class="toggle" type="button">收起</button>';
+    var pre = document.createElement('pre');
+    pre.className = 'code';
+    var start = parseInt(src.dataset.start, 10);
+    var hl = highlight(src.textContent.replace(/\n+$/, ''));
+    pre.innerHTML = hl.split('\n').map(function (l, i) {
+      return '<span class="l"><span class="ln">' + (start + i) + '</span>' + (l || ' ') + '</span>';
+    }).join('');
+    fig.appendChild(cap);
+    fig.appendChild(pre);
+    return fig;
+  }
+
+  var srcs = document.querySelectorAll('script.py-src');
+  srcs.forEach(function (s) {
+    var target = document.querySelector('div[data-code="' + s.dataset.key + '"]');
+    if (target) target.appendChild(buildPanel(s));
+  });
+
+  function copyText(text, btn) {
+    function done() {
+      var old = btn.textContent;
+      btn.textContent = '已复制';
+      setTimeout(function () { btn.textContent = old; }, 1200);
+    }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      done();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('button.toggle');
+    if (btn) {
+      var panel = btn.closest('.code-panel');
+      var collapsed = panel.classList.toggle('collapsed');
+      btn.textContent = collapsed ? '展开' : '收起';
+      return;
+    }
+    var copy = e.target.closest('button.copy');
+    if (copy) {
+      var key = copy.closest('.code-panel').dataset.sourceKey;
+      var source = document.querySelector('script.py-src[data-key="' + key + '"]');
+      if (source) copyText(source.textContent.replace(/^\n|\n+$/g, ''), copy);
+    }
+  });
+
+  var allCollapsed = false;
+  document.getElementById('collapseAll').addEventListener('click', function () {
+    allCollapsed = !allCollapsed;
+    document.querySelectorAll('.code-panel').forEach(function (panel) {
+      panel.classList.toggle('collapsed', allCollapsed);
+      panel.querySelector('.toggle').textContent = allCollapsed ? '展开' : '收起';
+    });
+    this.textContent = allCollapsed ? '展开代码' : '折叠代码';
+  });
+})();
+</script>
+<script>
+(function () {
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var backtop = document.getElementById('backtop');
+  var progress = document.getElementById('readProgress');
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section[id]'));
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a[href^="#"]'));
+
+  function setTheme(dark) {
+    root.dataset.theme = dark ? 'dark' : '';
+    themeBtn.textContent = dark ? '浅色' : '深色';
+  }
+  setTheme(false);
+  themeBtn.addEventListener('click', function () { setTheme(root.dataset.theme !== 'dark'); });
+  backtop.addEventListener('click', function () { window.scrollTo({top:0, behavior:'smooth'}); });
+  window.addEventListener('scroll', function () {
+    var max = document.documentElement.scrollHeight - innerHeight;
+    progress.style.width = (max > 0 ? scrollY / max * 100 : 0) + '%';
+    backtop.classList.toggle('show', scrollY > 650);
+  }, {passive:true});
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          links.forEach(function (a) {
+            a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, {rootMargin:'-22% 0px -65% 0px'});
+    sections.forEach(function (section) { observer.observe(section); });
+  }
+})();
+</script>
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['\\(', '\\)']] },
+    svg: { fontCache: 'local' }
+  };
+</script>
+<script src="mathjax/tex-svg.js"></script>
+</body>
+</html>

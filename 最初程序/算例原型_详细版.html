@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>双永磁体三维静磁算例 · 算例原型讲解</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --panel:#ffffff; --ink:#212734; --muted:#5c6575;
+    --accent:#2563eb; --line:#e3e6eb; --chip:#eaf0ff; --chip-ink:#2f46a3;
+    --code-bg:#282c34; --code-cap:#21252b; --code-ink:#abb2bf;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"SimSun","宋体","Songti SC","Noto Serif CJK SC","Source Han Serif SC","AR PL UMing CN","AR PL UMing HK","AR PL UMing TW",serif;
+    line-height:1.8;}
+  .wrap{max-width:1200px;margin:0 auto;padding:28px 20px 90px;}
+  header.top{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--accent);
+    border-radius:12px;padding:26px 30px;box-shadow:0 1px 3px rgba(16,24,40,.05);}
+  header.top h1{margin:0 0 8px;font-size:26px;}
+  header.top .stage{display:inline-block;background:var(--chip);color:var(--chip-ink);
+    border-radius:999px;font-size:12.5px;padding:2px 12px;margin-right:10px;vertical-align:2px;}
+  header.top p.sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;}
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:16px 2px;}
+  nav.toc a{background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:4px 16px;font-size:13.5px;text-decoration:none;color:var(--ink);}
+  nav.toc a:hover{border-color:var(--accent);color:var(--accent);}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:0 28px 26px;margin:18px 0;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.05);}
+  h2{font-size:25px;font-weight:700;margin:0 -28px 18px;padding:13px 28px;
+    background:linear-gradient(90deg,#1d4ed8,#3b82f6);color:#fff;}
+  h2 .no{color:#bfdbfe;margin-right:8px;}
+  h3{font-size:19px;font-weight:700;margin:24px 0 10px;color:#111827;
+    padding-left:12px;border-left:4px solid var(--accent);}
+  h3 .loc{color:var(--muted);font-weight:normal;font-size:14px;}
+  p,li{font-size:16px;}
+  ul{margin:8px 0;padding-left:22px;}
+  li{margin:5px 0;}
+  ol{padding-left:24px;}
+  ol li{margin:5px 0;}
+  .row{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);
+    gap:22px;align-items:start;margin:16px 0;}
+  @media(max-width:980px){.row{grid-template-columns:1fr}}
+  table{border-collapse:collapse;width:100%;font-size:15px;margin:10px 0;}
+  th,td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f4f8;font-weight:600;white-space:nowrap;}
+  td.num,th.num{text-align:center;}
+  .callout{border-left:3px solid var(--accent);background:#f0f6ff;padding:10px 14px;
+    border-radius:0 8px 8px 0;margin:10px 0;font-size:15.5px;}
+  .warn{border-left:3px solid #e3a13a;background:#fff8e8;padding:10px 14px;
+    border-radius:0 8px 8px 0;margin:10px 0;font-size:14.5px;color:#5d4a17;}
+  .mathbox{background:#f7f9fc;border:1px dashed var(--line);border-radius:10px;
+    padding:18px 22px;margin:14px 0;text-align:center;}
+  .math{font-family:"STIX Two Math","Cambria Math","Times New Roman",Georgia,serif;
+    font-size:19px;margin:8px 0;}
+  .math b{font-weight:bold;font-style:italic;}
+  .math.small{font-size:15px;color:var(--muted);font-style:normal;}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 4px;}
+  .chip{background:var(--chip);color:var(--chip-ink);border-radius:999px;
+    padding:3px 12px;font-size:13px;white-space:nowrap;}
+  .flow .arrow{color:#9aa3b0;}
+  .figrow{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0;}
+  @media(max-width:980px){.figrow{grid-template-columns:1fr}}
+  figure.fig{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+    background:#fbfcfe;}
+  figure.fig img{display:block;width:100%;height:auto;border-bottom:1px solid var(--line);}
+  figure.fig figcaption{padding:8px 12px;font-size:13.5px;color:var(--muted);line-height:1.6;}
+  figure.fig figcaption b{color:var(--ink);}
+  .code-panel{margin:0;background:var(--code-bg);border-radius:10px;overflow:hidden;
+    border:1px solid #1b1e24;}
+  .code-panel figcaption{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:7px 12px;background:var(--code-cap);color:var(--code-ink);font-size:13px;}
+  .code-panel figcaption .fn{color:#61afef;font-family:ui-monospace,"SF Mono",Consolas,monospace;}
+  .code-panel figcaption .loc{margin-left:auto;color:#7f848e;font-size:12px;white-space:nowrap;}
+  .code-panel button.toggle{border:1px solid #4b5263;background:transparent;color:var(--code-ink);
+    border-radius:4px;cursor:pointer;font-size:12px;padding:0 8px;line-height:1.6;}
+  .code-panel button.toggle:hover{border-color:#61afef;color:#61afef;}
+  .code-panel.collapsed pre{display:none;}
+  .code-stack > div{margin-bottom:14px;}
+  .code-stack > div:last-child{margin-bottom:0;}
+  pre.code{margin:0;padding:10px 0;overflow:auto;font-size:12.8px;line-height:1.62;
+    font-family:ui-monospace,"SF Mono",Consolas,"Liberation Mono",monospace;color:var(--code-ink);}
+  pre.code .l{display:block;padding:0 14px 0 6px;white-space:pre;}
+  pre.code .l:hover{background:#2c313a;}
+  pre.code .ln{display:inline-block;width:3.4em;margin-right:16px;color:#4b5263;
+    text-align:right;user-select:none;}
+  .k{color:#c678dd}.s{color:#98c379}.c{color:#7f848e;font-style:italic}
+  .n{color:#d19a66}.d{color:#61afef}
+  details.helper{margin:14px 0 0;}
+  details.helper summary{cursor:pointer;color:var(--muted);font-size:13.5px;}
+  details.helper summary:hover{color:var(--accent);}
+  details.helper .code-panel{margin-top:10px;}
+  .foot{color:var(--muted);font-size:13px;margin-top:26px;text-align:center;}
+  code.inline{background:#eef1f5;border-radius:4px;padding:0 5px;font-size:13px;
+    font-family:ui-monospace,"SF Mono",Consolas,monospace;}
+  /* 2026 技术说明版视觉系统 */
+  :root{
+    --bg:#edf3f6;--panel:#ffffff;--ink:#102235;--muted:#627180;
+    --accent:#0f766e;--accent-2:#ea6a47;--line:#d8e3e8;--chip:#def3ef;--chip-ink:#0c645e;
+    --code-bg:#15232d;--code-cap:#101c24;--code-ink:#c3d1d7;--shadow:0 16px 45px rgba(25,50,70,.09);
+  }
+  body{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;
+    background:radial-gradient(circle at 5% 4%,rgba(15,118,110,.09),transparent 24%),var(--bg);line-height:1.72}
+  .read-progress{position:fixed;inset:0 0 auto;z-index:80;height:4px;background:rgba(16,34,53,.08)}
+  .read-progress span{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+  .wrap{max-width:1260px;padding-top:34px}
+  header.top{border:none;border-radius:24px;padding:38px 42px;background:linear-gradient(145deg,#0e2638,#133f4c);color:#fff;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  header.top::after{content:"";position:absolute;width:330px;height:330px;border-radius:50%;right:-110px;top:-170px;border:1px solid rgba(255,255,255,.14);box-shadow:0 0 0 48px rgba(255,255,255,.03),0 0 0 96px rgba(255,255,255,.02)}
+  header.top h1{font-size:clamp(28px,4vw,43px);line-height:1.2;letter-spacing:-.035em;position:relative;z-index:1}
+  header.top .stage{background:#9fe7dc;color:#103e43;font-weight:800;vertical-align:5px}
+  header.top p.sub{color:#cddde3;font-size:15px;max-width:980px;position:relative;z-index:1}
+  header.top code.inline{background:rgba(255,255,255,.1);color:#fff}
+  .eyebrow{color:#9fe7dc;font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;margin-bottom:13px;position:relative;z-index:1}
+  .summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:25px;position:relative;z-index:1}
+  .summary-strip div{border:1px solid rgba(255,255,255,.14);border-radius:13px;padding:10px 13px;background:rgba(255,255,255,.06);color:#cddde3;font-size:12px}
+  .summary-strip b{display:block;color:#fff;font-size:18px;margin-bottom:1px}
+  nav.toc{position:sticky;top:10px;z-index:50;background:rgba(247,250,251,.88);border:1px solid var(--line);border-radius:16px;padding:9px 10px;backdrop-filter:blur(14px);box-shadow:0 8px 24px rgba(25,50,70,.08)}
+  nav.toc a{background:transparent;border-color:transparent;font-weight:650;padding:5px 12px}
+  nav.toc a:hover,nav.toc a.active{background:var(--chip);color:var(--accent);border-color:#c7e7e1}
+  nav.toc .nav-spacer{flex:1}
+  .nav-action{font:inherit;cursor:pointer;background:#fff!important;border:1px solid var(--line)!important;color:var(--ink)!important;border-radius:999px!important;padding:5px 12px!important;font-size:12.5px!important;text-decoration:none}
+  .nav-action:hover{border-color:var(--accent)!important;color:var(--accent)!important}
+  .stage-route{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:17px 0}
+  .route-item{background:#f8fbfc;border:1px solid var(--line);border-radius:15px;padding:15px 17px;color:var(--muted);font-size:13px;position:relative}
+  .route-item b{display:block;color:var(--ink);font-size:15px;margin:3px 0}.route-item small{color:var(--accent);font-weight:800;letter-spacing:.09em}
+  .route-item.active{background:linear-gradient(145deg,#e3f6f2,#fff);border-color:#8dcec4;box-shadow:0 10px 26px rgba(15,118,110,.10)}
+  .route-item.active::after{content:"当前";position:absolute;right:11px;top:10px;background:var(--accent);color:#fff;border-radius:999px;padding:1px 8px;font-size:10px}
+  section{border:none;border-radius:18px;box-shadow:var(--shadow);padding-bottom:31px;scroll-margin-top:82px}
+  h2{background:linear-gradient(90deg,#0f685f,#148a7d);font-size:24px;padding-top:15px;padding-bottom:15px}
+  h2 .no{color:#a9ece1}h3{border-left-color:var(--accent);color:var(--ink)}
+  th{background:#eaf3f3;color:#173f42}th,td{border-color:var(--line)}
+  .callout{border-left-color:var(--accent);background:#eaf7f5}.mathbox{background:#f6fafb;border-color:var(--line)}
+  .chip{background:var(--chip);color:var(--chip-ink);border:1px solid #c7e7e1;padding:4px 11px;font-weight:650}.flow{gap:8px}
+  .geometry-overview{display:grid;grid-template-columns:minmax(300px,.95fr) 1.05fr;gap:25px;align-items:center;background:#f7fafb;border:1px solid var(--line);border-radius:16px;padding:17px 22px;margin:12px 0 22px}
+  .geometry-overview svg{width:100%;height:210px}.geometry-overview h3{margin-top:0}.geometry-overview p{color:var(--muted);font-size:14px}
+  figure.fig{border-radius:14px;box-shadow:0 8px 22px rgba(25,50,70,.06)}figure.fig img{transition:transform .25s ease}figure.fig:hover img{transform:scale(1.012)}
+  .code-panel{box-shadow:0 9px 24px rgba(8,20,30,.13)}
+  .code-panel button.copy{border:1px solid #4b6270;background:transparent;color:var(--code-ink);border-radius:4px;cursor:pointer;font-size:12px;padding:0 8px;line-height:1.6}
+  .code-panel button.copy:hover{border-color:#65d2c4;color:#65d2c4}
+  .backtop{position:fixed;right:24px;bottom:24px;z-index:55;width:42px;height:42px;border:none;border-radius:50%;background:var(--accent);color:#fff;box-shadow:0 9px 24px rgba(15,118,110,.26);cursor:pointer;opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s}
+  .backtop.show{opacity:1;transform:none;pointer-events:auto}
+  [data-theme="dark"]{--bg:#0c171e;--panel:#13232c;--ink:#e4eef1;--muted:#9babb3;--line:#29404c;--chip:#173d3c;--chip-ink:#91ddd2;--shadow:0 16px 45px rgba(0,0,0,.22)}
+  [data-theme="dark"] body{background:#0c171e}[data-theme="dark"] section,[data-theme="dark"] .route-item,[data-theme="dark"] .geometry-overview{background:#13232c}
+  [data-theme="dark"] .route-item.active{background:#173536;border-color:#39756f}
+  [data-theme="dark"] th{background:#1a343c;color:#d9eeed}[data-theme="dark"] .callout{background:#173536}[data-theme="dark"] .mathbox{background:#102029}
+  [data-theme="dark"] code.inline{background:#1c3039;color:#d5e4e8}[data-theme="dark"] nav.toc{background:rgba(15,29,37,.9)}
+  @media(max-width:820px){.wrap{padding:18px 10px 80px}header.top{padding:30px 24px}.summary-strip{grid-template-columns:1fr 1fr}.stage-route{grid-template-columns:1fr}.geometry-overview{grid-template-columns:1fr}.geometry-overview svg{height:170px}nav.toc{top:4px;overflow-x:auto;flex-wrap:nowrap}nav.toc a{white-space:nowrap}.nav-spacer,.nav-action{display:none}section{padding-left:18px;padding-right:18px}h2{margin-left:-18px;margin-right:-18px;padding-left:18px}.backtop{right:14px;bottom:14px}}
+  @media print{.read-progress,nav.toc,.backtop,.nav-action{display:none!important}.wrap{max-width:none;padding:0}section,header.top{box-shadow:none;break-inside:avoid}.code-panel.collapsed pre{display:block}}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="read-progress" aria-hidden="true"><span id="readProgress"></span></div>
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">FEALPy integration study · baseline benchmark</div>
+  <h1><span class="stage">阶段 ① / ③</span>双永磁体三维静磁算例 · 算例原型讲解</h1>
+  <p class="sub">用<b>磁标势有限元</b>计算两块沿 +z 平行充磁的长方体永磁体之间的磁力，
+  并与 <b>Akoun–Yonnet 解析解</b>、<b>ANSYS EMFT 参考值</b>对标。
+  本页为交互版，含 §1–§4 与附录；代码均摘自
+  <code class="inline">最初程序/double_magnet_benchmark.py</code>，行号可直接对照原文件。</p>
+  <div class="summary-strip">
+    <div><b>16</b>位移工况</div><div><b>p = 1 / 2</b>有限元阶次</div>
+    <div><b>0.67% / 1.94%</b>解析解归一化 RMSE</div><div><b>2 类</b>独立参考</div>
+  </div>
+</header>
+
+<nav class="toc">
+  <a href="#s1">§1 问题设定</a>
+  <a href="#s2">§2 数学建模</a>
+  <a href="#s3">§3 数值流水线（六步）</a>
+  <a href="#s4">§4 结果与验证</a>
+  <a href="#appendix">附录 运行方式</a>
+  <span class="nav-spacer"></span>
+  <a class="nav-action" href="算例原型_简洁版.html">演示版</a>
+  <button class="nav-action" id="collapseAll" type="button">折叠代码</button>
+  <button class="nav-action" id="themeToggle" type="button">深色</button>
+</nav>
+
+<div class="stage-route" aria-label="项目三阶段路线">
+  <div class="route-item active"><small>STAGE 01</small><b>独立算例基线</b>建立可复现、可对标的数值闭环。</div>
+  <div class="route-item"><small>STAGE 02</small><b>算例工程化分块</b>拆分职责，同时保持数值结果不变。</div>
+  <div class="route-item"><small>STAGE 03</small><b>FEALPy 通用化集成</b>沉淀公共接口，并用测试守住正确性。</div>
+</div>
+
+<!-- ============================== §1 ============================== -->
+<section id="s1">
+  <h2><span class="no">§1</span>问题设定</h2>
+
+  <div class="geometry-overview">
+    <img src="../初步集成/results/double_magnet_geometry.png" alt="双磁体几何示意图" style="width:100%;height:auto;display:block;border-radius:10px">
+    <div><h3>几何关系先于公式</h3><p>两块长方体永磁体均沿 +z 充磁，上磁体沿 x 方向移动。虚线 Maxwell 盒只包围下磁体，表面积分得到下磁体受力，再统一换算为用于对标的上磁体受力。</p><div class="callout"><b>验证范围：</b>解析解和 ANSYS 数据均只提供 Fx、Fy；程序虽然输出 Fz，但本阶段不把 Fz 作为已验证结论。</div></div>
+  </div>
+
+  <h3>1.1 几何（代码内统一 SI 单位，下表以 mm 标注便于阅读）</h3>
+  <table>
+    <tr><th>区域</th><th>下角点 (mm)</th><th>上角点 (mm)</th><th>尺寸 (mm)</th></tr>
+    <tr><td>空气盒 air</td><td>(−30, −30, −27)</td><td>(x_max, 30, 27)，x_max = 30 + max(d−8, 0)</td><td>随 d 伸长</td></tr>
+    <tr><td>下磁体 magnet1</td><td>(−10, −6, −3)</td><td>(10, 6, 3)</td><td>20 × 12 × 6</td></tr>
+    <tr><td>上磁体 magnet2</td><td>(−10+d, −14, 5)</td><td>(2+d, 6, 11)</td><td>12 × 20 × 6</td></tr>
+    <tr><td>Maxwell 应力盒</td><td>(−12, −8, −5)</td><td>(12, 8, 4)</td><td>24 × 16 × 9</td></tr>
+  </table>
+  <ul>
+    <li>上磁体随位移 d 沿 x 平移，两磁体中心偏移 \((\alpha,\beta,\gamma)=(-4+d,-4,8)\) mm；</li>
+    <li>Maxwell 盒只包围<b>下磁体</b>（四周留空气间隙），应力积分在盒面上进行，因此得到下磁体受力 \(F_0\)，上磁体受力 \(F_1=-F_0\)。</li>
+  </ul>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">1.2 材料与物理常量</h3>
+      <table>
+        <tr><th>量</th><th>符号</th><th>值</th></tr>
+        <tr><td>真空磁导率</td><td>\(\mu_0\)</td><td>\(4\pi\times 10^{-7}\) H/m</td></tr>
+        <tr><td>剩磁通密度</td><td>\(B_{r,z}\)</td><td>0.38 T（两块磁体均沿 +z）</td></tr>
+        <tr><td>磁化强度</td><td>\(M_z = B_{r,z}/\mu_0\)</td><td>\(\approx 3.02\times 10^{5}\) A/m</td></tr>
+        <tr><td>相对磁导率</td><td>\(\mu_r\)</td><td>1（当前所有区域）</td></tr>
+      </table>
+      <p>当前所有区域 \(\mu_r=1\)，弱形式退化为变系数 = 常系数的泊松方程；Maxwell 盒的两个对角点也在常量区给出。</p>
+    </div>
+    <div data-code="constants"></div>
+  </div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">1.3 对标数据 · ANSYS 参考表</h3>
+      <ul>
+        <li>来自 ANSYS Mechanical APDL 验证宏 <b>EMFT</b>，给出 16 个位移（d = 0, 2, …, 30 mm）的参考磁力 (Fx, Fy)；</li>
+        <li>仅用于结果对比与绘图，<b>不参与求解</b>；</li>
+        <li>对标时统一取<b>上磁体受力 F1</b>（见 §4.1）。</li>
+      </ul>
+    </div>
+    <div data-code="ansys-table"></div>
+  </div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">1.3 对标数据 · Akoun–Yonnet 解析公式</h3>
+      <ul>
+        <li>两个均匀充磁长方体间磁力的<b>闭式解</b>，2⁶ = 64 项双重求和，对应<b>无限域</b>精确解；</li>
+        <li>输入：两磁体半尺寸 \((a,b,c)=(10,6,3)\)、\((A,B,C)=(6,10,3)\) mm，中心偏移 \((\alpha,\beta,\gamma)=(-4+d,-4,8)\) mm；</li>
+        <li>当前只实现 Fx、Fy 两个分量，<b>不算 Fz</b>——两类参考数据均无 Fz，对标只用 Fx / Fy。</li>
+      </ul>
+    </div>
+    <div data-code="ay"></div>
+  </div>
+</section>
+
+<!-- ============================== §2 ============================== -->
+<section id="s2">
+  <h2><span class="no">§2</span>数学建模</h2>
+  <p>控制方程（静磁、无自由电流）：</p>
+  <div class="mathbox">
+    <div class="math">\(\nabla\cdot\mathbf{B}=0,\qquad \mathbf{B}=\mu_0(\mu_r\mathbf{H}+\mathbf{M}),\qquad \mathbf{H}=-\nabla\varphi\)</div>
+    <div class="math">⟹ 弱形式：\(\displaystyle\int_\Omega \mu_r\nabla\varphi\cdot\nabla v\,\mathrm{d}x=\int_\Omega \mathbf{M}\cdot\nabla v\,\mathrm{d}x\)</div>
+    <div class="math small">边界条件：外边界取齐次自然条件 \(\mathbf{B}\cdot\mathbf{n}=0\)（用截断空气盒近似无限域）</div>
+  </div>
+  <div class="callout"><b>纯 Neumann 注意点</b>：刚度矩阵有常数核（\(\varphi\) 只确定到常数）。
+  右端 \(\int_\Omega\mathbf{M}\cdot\nabla v\,\mathrm{d}x\) 与常数函数正交（系统相容），从零初值出发的 CG 收敛；
+  常数平移不影响 \(\nabla\varphi\)，因此不影响 \(\mathbf{B}\) 和力。</div>
+</section>
+
+<!-- ============================== §3 ============================== -->
+<section id="s3">
+  <h2><span class="no">§3</span>数值流水线（六步）</h2>
+  <div class="flow">
+    <span class="chip">几何建模</span><span class="arrow">→</span>
+    <span class="chip">fragment 共形合并</span><span class="arrow">→</span>
+    <span class="chip">Box 尺寸场（近细远粗）</span><span class="arrow">→</span>
+    <span class="chip">线性四面体网格</span><span class="arrow">→</span>
+    <span class="chip">区域标签 0/1/2/3</span><span class="arrow">→</span>
+    <span class="chip">LagrangeFESpace(p)</span><span class="arrow">→</span>
+    <span class="chip">组装</span><span class="arrow">→</span>
+    <span class="chip">PyAMG-CG 求解</span><span class="arrow">→</span>
+    <span class="chip">Maxwell 应力积分</span><span class="arrow">→</span>
+    <span class="chip">对标 AY / ANSYS</span>
+  </div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">3.1 网格生成 <span class="loc">build_gmsh_mesh() · L151–230</span></h3>
+      <ol>
+        <li>固定输入四个盒数据（air / magnet1 / magnet2 / maxwell_box）；</li>
+        <li>OCC 建模四个 box；</li>
+        <li><code class="inline">fragment</code> 布尔合并 → 区域界面成为共享四面体面（<b>共形网格</b>）；</li>
+        <li>Box 尺寸场：近场 h_near = 1.5 mm、远场 h_far = 6.0 mm、过渡带 Thickness = 8 mm；</li>
+        <li>生成网格：Algorithm3D = 10（HXT），ElementOrder = 1；</li>
+        <li>单元区域标签：0 = 盒外空气，1 = 盒内空气，2 = 下磁体，3 = 上磁体。</li>
+      </ol>
+      <div class="callout"><b>设计要点</b>：Gmsh 只出<b>线性</b>四面体，有限元次数由
+      <code class="inline">LagrangeFESpace(mesh, p)</code> 控制——同一网格可做 p = 1 / 2 对比，
+      也规避 Gmsh 高阶节点序与 FEALPy 约定不一致的风险。</div>
+    </div>
+    <div data-code="build-gmsh-mesh"></div>
+  </div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">3.2 网格转换与标签 <span class="loc">gmsh_to_fealpy_tetra_mesh() · L81–116</span></h3>
+      <ul>
+        <li>Gmsh 的节点号 / 单元号<b>不连续</b>，先建两张压缩映射表（node_tag_to_index、element_tag_to_cell）转为连续下标；</li>
+        <li>按「Gmsh 体积 → 其中四面体」逐区域写入标签；</li>
+        <li>返回 FEALPy <code class="inline">TetrahedronMesh</code> 与 <code class="inline">cell_tag</code>（形状 (NC,)）。</li>
+      </ul>
+      <div class="callout">元素类型硬编码 <code class="inline">getElementsByType(4)</code>（线性四面体）——与「Gmsh 只出线性网格」的约定配套。</div>
+    </div>
+    <div data-code="gmsh-to-fealpy"></div>
+  </div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">3.3 组装 <span class="loc">assemble() · L232–253</span></h3>
+      <ul>
+        <li>刚度：<code class="inline">BilinearForm</code> + <code class="inline">ScalarDiffusionIntegrator(q=p+1)</code> → \(\int_\Omega\nabla\varphi\cdot\nabla v\,\mathrm{d}x\)；</li>
+        <li>右端：<code class="inline">LinearForm</code> + <code class="inline">GradSourceIntegrator(q=p)</code>；</li>
+        <li>磁化张量形状 (NC, 1, 3)，用 <code class="inline">cell_tag &gt;= 2</code> 定位两块磁体单元、写入 \(M_z\)（当前所有区域 \(\mu_r=1\)，故刚度无系数）。</li>
+      </ul>
+    </div>
+    <div data-code="assemble"></div>
+  </div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">3.4 求解 <span class="loc">_solve_linear_system() · L282–305</span></h3>
+      <ul>
+        <li>PyAMG smoothed-aggregation 代数多重网格 + V-cycle 预条件 CG；</li>
+        <li>rtol = 1e-10，atol = 1e-12，maxiter = 5000，从零初值出发；</li>
+        <li>系统半正定但相容（§2），CG 残差始终落在值域内，收敛到某个特解 \(\varphi\)。</li>
+      </ul>
+    </div>
+    <div data-code="solve-linear"></div>
+  </div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">3.5 Maxwell 应力后处理 <span class="loc">find_maxwell_faces() + compute_maxwell_force() + _cell_grad_basis_on_faces()</span></h3>
+      <ol>
+        <li>由盒内 / 盒外空气的<b>标签跳变（0 ↔ 1）</b>找出 Maxwell 闭合面；</li>
+        <li>法向定向：比较面中心与盒中心连线方向，统一修正为<b>指向盒外</b>；</li>
+        <li>辅助函数 <code class="inline">_cell_grad_basis_on_faces()</code> 在面高斯点上求相邻两侧四面体的基函数梯度（按面顶点局部排列分组）；</li>
+        <li>面上的 \(\mathbf{B}=-\mu_0\nabla\varphi\) 取相邻两侧单元的平均（面两侧均为空气，\(\mathbf{B}\) 连续）；</li>
+        <li>积分 Maxwell 应力张量：</li>
+      </ol>
+      <div class="mathbox">
+        <div class="math">\(\mathbf{F}=\int_S \frac{1}{\mu_0}\left[(\mathbf{B}\cdot\mathbf{n})\mathbf{B}-\frac{1}{2}|\mathbf{B}|^2\mathbf{n}\right]\mathrm{d}x\)</div>
+      </div>
+      <p>得到下磁体受力 \(F_0\)；上磁体受力 \(F_1=-F_0\)（作用力与反作用力）。</p>
+      <div class="callout">Maxwell 盒不是独立材料（也是空气），网格中唯一的痕迹是「盒内空气(1) / 盒外空气(0)」的标签，因此用标签跳变找面。</div>
+    </div>
+      <div class="code-stack">
+      <div data-code="maxwell-faces"></div>
+      <div data-code="helper"></div>
+      <div data-code="maxwell-force"></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">3.6 单工况与扫描 <span class="loc">solve() · L388–408</span></h3>
+      <ul>
+        <li><code class="inline">solve(d)</code>：单工况完整流程——建网格 → 组装 → 求解 → 算力，返回 {d, phi, F0, F1}；</li>
+        <li><code class="inline">run_scan()</code>（L410–533）为<b>扫描程序</b>：遍历 d = 0, 2, …, 30 mm、p = 1 与 p = 2，打印逐点力并绘制力—位移曲线与误差曲线——按约定<b>此处不附代码</b>。</li>
+      </ul>
+    </div>
+    <div data-code="solve"></div>
+  </div>
+</section>
+
+<!-- ============================== §4 ============================== -->
+<section id="s4">
+  <h2><span class="no">§4</span>结果与验证</h2>
+
+  <h3>4.1 典型工况（p = 2，d = 0，初始位置）</h3>
+  <p>对比量统一取<b>上磁体受力 \(F_1\)</b>：</p>
+  <table>
+    <tr><th>来源</th><th class="num">Fx (N)</th><th class="num">Fy (N)</th><th class="num">Fx 误差</th><th class="num">Fy 误差</th></tr>
+    <tr><td>FEALPy FEM</td><td class="num">0.580421</td><td class="num">0.572818</td><td class="num">—</td><td class="num">—</td></tr>
+    <tr><td>Akoun–Yonnet</td><td class="num">0.588356</td><td class="num">0.588356</td><td class="num">−1.3%</td><td class="num">−2.6%</td></tr>
+    <tr><td>ANSYS 参考</td><td class="num">0.594460</td><td class="num">0.629140</td><td class="num">−2.4%</td><td class="num">−9.0%</td></tr>
+  </table>
+  <div class="callout"><b>偏差解读</b>：AY 是无限域精确解，FEM 用截断空气盒 + \(\mathbf{B}\cdot\mathbf{n}=0\) 近似，
+  误差中混有<b>区域截断误差</b>；ANSYS 的 Fy 方向 9% 偏差属原 benchmark 已知量级。</div>
+
+  <h3>4.2 全位移扫描（p = 2，16 个工况，d = 0, 2, …, 30 mm）</h3>
+  <table>
+    <tr><th>参考</th><th>分量</th><th class="num">归一化 RMSE</th><th class="num">最大误差 (N)</th></tr>
+    <tr><td rowspan="2">Akoun–Yonnet</td><td>Fx</td><td class="num">0.67%</td><td class="num">1.37e-2（d=18）</td></tr>
+    <tr><td>Fy</td><td class="num">1.94%</td><td class="num">1.86e-2（d=4）</td></tr>
+    <tr><td rowspan="2">ANSYS</td><td>Fx</td><td class="num">2.17%</td><td class="num">4.37e-2（d=18）</td></tr>
+    <tr><td>Fy</td><td class="num">4.14%</td><td class="num">5.63e-2（d=0）</td></tr>
+  </table>
+  <p>归一化按对应参考分量的峰值；16 个位移工况的计算结果与两类参考曲线形状一致。
+  完整 CSV 与图片见 <code class="inline">双永磁体算例+命令行参数/results/</code>。</p>
+
+  <div class="figrow">
+    <figure class="fig">
+      <a href="images/force_displacement.png" target="_blank" title="点击查看原图">
+        <img src="images/force_displacement.png" alt="力—位移对比曲线">
+      </a>
+      <figcaption><b>图 1 · 力—位移对比曲线</b>（d = 0..30 mm 共 16 工况）：
+      FEALPy FEM 的 Fx / Fy（p=1 圆圈、p=2 方块，实线 Fx、虚线 Fy）
+      与 Akoun–Yonnet 解析解、ANSYS 参考的逐点对比，曲线形状与两类参考一致。</figcaption>
+    </figure>
+    <figure class="fig">
+      <a href="images/force_error.png" target="_blank" title="点击查看原图">
+        <img src="images/force_error.png" alt="带符号误差曲线">
+      </a>
+      <figcaption><b>图 2 · 带符号误差曲线</b>：误差定义为 FEALPy − 参考（单位 N），
+      零水平线区分结果相对参考解偏大还是偏小；含 p=1 / p=2 分别对
+      Akoun–Yonnet 与 ANSYS 的误差曲线，与表 4.2 的统计对应。</figcaption>
+    </figure>
+  </div>
+  <p style="font-size:13.5px;color:var(--muted)">两图由最初程序
+  <code class="inline">double_magnet_benchmark.py --scan</code>（p=1 与 p=2 各 16 工况）
+  <b>实际运行</b>生成（等价命令见附录；headless 存图脚本为
+  <code class="inline">generate_figures.py</code>），点击图片可在新标签页查看原尺寸大图。</p>
+</section>
+
+<!-- ============================== 附录 ============================== -->
+<section id="appendix">
+  <h2><span class="no">附录</span>运行方式</h2>
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">命令行入口 <span class="loc">main() · L536–554</span></h3>
+      <ul>
+        <li><code class="inline">--d</code>：位移（mm），默认 0；</li>
+        <li><code class="inline">--p</code>：有限元次数，1 或 2，默认 2；</li>
+        <li><code class="inline">--scan</code>：全扫描模式（p = 1 与 p = 2 各算一遍 16 个位移）。</li>
+      </ul>
+      <pre style="background:#eef1f5;border-radius:8px;padding:10px 14px;font-size:13px;overflow:auto"><code># 单工况（d=0 mm，p=2）
+python double_magnet_benchmark.py --d 0 --p 2
+
+# 全扫描（p=1 与 p=2，16 个位移，弹出力—位移曲线与误差图）
+python double_magnet_benchmark.py --scan</code></pre>
+    </div>
+    <div data-code="main"></div>
+  </div>
+</section>
+
+<p class="foot">本页为《最初程序讲解.md》的 HTML 交互版（§1–§4 / 附录）；
+完整讲解（含概览、关键问答、代码地图与演进路线）见同目录 Markdown 文件 ·
+下一站 <a href="../初步分块/模块化_详细版.html">算例工程化分块（Stage 02）详细版</a>。</p>
+
+</div>
+<button class="backtop" id="backtop" type="button" aria-label="返回顶部">↑</button>
+
+<!-- ============ 代码源（text/plain，避免转义问题） ============ -->
+<script type="text/plain" class="py-src" data-key="constants" data-start="31" data-end="37" data-title="常量区（L31–37）">
+MU0 = 4.0 * math.pi * 1.0e-7  # 真空磁导率，单位 H/m。
+BR_Z = 0.38                   # 两个永磁体沿 +z 方向的剩磁通密度，单位 T。
+MZ = BR_Z / MU0               # 磁化强度幅值，A/m
+
+# 包围下磁体的 Maxwell 应力积分盒的两个对角点，单位 m。
+MAXWELL_LO = np.array([-12.0, -8.0, -5.0]) * 1.0e-3
+MAXWELL_HI = np.array([12.0, 8.0, 4.0]) * 1.0e-3
+</script>
+
+<script type="text/plain" class="py-src" data-key="ansys-table" data-start="39" data-end="48" data-title="ANSYS_REFERENCE_FORCE（L39–48）">
+# ANSYS Mechanical APDL 指南第 6.7.2 节 EMFT 宏的参考磁力（作用在上磁体上），
+# 仅用于结果对比与绘图，不参与求解。
+ANSYS_REFERENCE_FORCE = {
+    0.0: (0.59446, 0.62914), 2.0: (0.22622, 0.64344), 4.0: (-0.004062, 0.64730),
+    6.0: (-0.22972, 0.64007), 8.0: (-0.60745, 0.60659), 10.0: (-0.93074, 0.52447),
+    12.0: (-1.09950, 0.43539), 14.0: (-1.13700, 0.35075), 16.0: (-1.08570, 0.23258),
+    18.0: (-0.91710, 0.12708), 20.0: (-0.58312, 0.041178), 22.0: (-0.24666, 0.0034075),
+    24.0: (-0.079544, 0.0021191), 26.0: (0.010552, 0.0039768), 28.0: (0.036675, -0.0022967),
+    30.0: (0.052253, 0.011228),
+}
+</script>
+
+<script type="text/plain" class="py-src" data-key="ay" data-start="51" data-end="78" data-title="akoun_yonnet_force(d)（L51–78）">
+def akoun_yonnet_force(d):
+    """计算位移 d 下上磁体（磁体 2）受到的解析力 (Fx, Fy)，d 的单位为 mm。"""
+    a, b, c = np.array([10.0, 6.0, 3.0])*1.0e-3
+    A, B, C = np.array([6.0, 10.0, 3.0])*1.0e-3
+    alpha, beta, gamma = np.array([-4.0+d, -4.0, 8.0])*1.0e-3
+    force = np.zeros(2)
+
+    for m, n, p, q, r, s in product((0, 1), repeat=6):
+        U = alpha + A*(-1)**m - a*(-1)**n
+        V = beta + B*(-1)**q - b*(-1)**p
+        W = gamma + C*(-1)**s - c*(-1)**r
+        R = np.sqrt(U**2 + V**2 + W**2)
+        angle = np.arctan2(U*V, W*R)
+        sign = (-1)**(m+n+p+q+r+s)
+
+        force[0] += sign*(
+            (V**2-W**2)*np.log(R-U)/2
+            + U*V*np.log(R-V)
+            + V*W*angle
+            + U*R/2
+        )
+        force[1] += sign*(
+            (U**2-W**2)*np.log(R-V)/2
+            + U*V*np.log(R-U)
+            + U*W*angle
+            + V*R/2
+        )
+    return BR_Z**2*force/(4*np.pi*MU0)
+</script>
+
+<script type="text/plain" class="py-src" data-key="gmsh-to-fealpy" data-start="81" data-end="116" data-title="gmsh_to_fealpy_tetra_mesh()（L81–116）">
+def gmsh_to_fealpy_tetra_mesh(volume_to_cell_tag):
+    """
+    提取 Gmsh 四节点四面体网格，并按体区域写入单元标签。
+
+    Parameters
+    ----------
+    volume_to_cell_tag : dict[int, int]
+        Gmsh 三维体编号到单元区域编号的映射。
+
+    Returns
+    -------
+    mesh : TetrahedronMesh
+        转换后的 FEALPy 四面体网格。
+    cell_tag : TensorLike, shape (NC,)
+        每个四面体的区域编号。
+    """
+    node_tags, node_coordinates, _ = gmsh.model.mesh.getNodes()
+    node_tags = np.asarray(node_tags, dtype=np.int64)
+    node = np.asarray(node_coordinates).reshape(-1, 3)
+    element_tags, connectivity = gmsh.model.mesh.getElementsByType(4)
+    element_tags = np.asarray(element_tags, dtype=np.int64)
+    connectivity = np.asarray(connectivity, dtype=np.int64).reshape(-1, 4)
+
+    node_tag_to_index = np.empty(node_tags.max() + 1, dtype=np.int64)
+    node_tag_to_index[node_tags] = np.arange(len(node_tags))
+    cell = node_tag_to_index[connectivity]
+
+    element_tag_to_cell = np.full(element_tags.max() + 1, -1, dtype=np.int64)
+    element_tag_to_cell[element_tags] = np.arange(len(element_tags))
+    cell_tag = np.zeros(len(cell), dtype=np.int32)
+    for volume_tag, tag in volume_to_cell_tag.items():
+        volume_element_tags, _ = gmsh.model.mesh.getElementsByType(4, volume_tag)
+        cell_tag[element_tag_to_cell[volume_element_tags]] = tag
+
+    mesh = TetrahedronMesh(bm.from_numpy(node), bm.from_numpy(cell))
+    return mesh, bm.from_numpy(cell_tag)
+</script>
+
+<script type="text/plain" class="py-src" data-key="build-gmsh-mesh" data-start="151" data-end="230" data-title="build_gmsh_mesh()（L151–230）">
+    def build_gmsh_mesh(self):
+        """
+        Boolean fragment 后生成材料面和 Maxwell 面都共形的四面体网格。
+
+        使用 ``solve(d)`` 设置的 ``self.d`` 以及网格尺寸参数，
+        结果保存在 ``self.mesh``、``self.cell_tag`` 和 ``self.space`` 中，
+        同时构造 Maxwell 面编号和外法向。
+        """
+        x_max = 30.0 + max(self.d - 8.0, 0.0)
+        self.air_box = np.array(
+            [-30.0, -30.0, -27.0, x_max, 30.0, 27.0]
+        ) * 1.0e-3
+        magnet1_lo = np.array([-10.0, -6.0, -3.0]) * 1.0e-3
+        magnet1_hi = np.array([10.0, 6.0, 3.0]) * 1.0e-3
+        magnet2_lo = np.array([-10.0 + self.d, -14.0, 5.0]) * 1.0e-3
+        magnet2_hi = np.array([2.0 + self.d, 6.0, 11.0]) * 1.0e-3
+
+        gmsh.initialize()
+        gmsh.option.setNumber("General.Terminal", 0)
+        gmsh.model.add(f"double_magnet_d{self.d:g}")
+
+        # 构建几何
+        air = gmsh.model.occ.addBox(
+            self.air_box[0],
+            self.air_box[1], self.air_box[2],
+            self.air_box[3] - self.air_box[0],
+            self.air_box[4] - self.air_box[1],
+            self.air_box[5] - self.air_box[2],
+        )
+        magnet1 = gmsh.model.occ.addBox(*magnet1_lo, *(magnet1_hi - magnet1_lo))
+        magnet2 = gmsh.model.occ.addBox(*magnet2_lo, *(magnet2_hi - magnet2_lo))
+        maxwell_box = gmsh.model.occ.addBox(*MAXWELL_LO, *(MAXWELL_HI - MAXWELL_LO))
+
+        ## 几何合并
+        _, fragment_map = gmsh.model.occ.fragment(
+            [(3, air)], [(3, magnet1), (3, magnet2), (3, maxwell_box)]
+        )
+        magnet1_volumes = fragment_map[1]
+        magnet2_volumes = fragment_map[2]
+        maxwell_volumes = fragment_map[3]
+        gmsh.model.occ.synchronize()
+
+        # 构造尺寸场：近场细、远场粗
+        field = gmsh.model.mesh.field.add("Box")
+        near_bounds = {
+            "XMin": -18.0,
+            "XMax": max(18.0, self.d + 8.0),
+            "YMin": -20.0,
+            "YMax": 14.0,
+            "ZMin": -11.0,
+            "ZMax": 17.0,
+        }
+        gmsh.model.mesh.field.setNumber(field, "VIn", self.h_near * 1.0e-3)
+        gmsh.model.mesh.field.setNumber(field, "VOut", self.h_far * 1.0e-3)
+        for name, value in near_bounds.items():
+            gmsh.model.mesh.field.setNumber(field, name, value * 1.0e-3)
+
+        gmsh.model.mesh.field.setNumber(field, "Thickness", 8.0e-3)
+        gmsh.model.mesh.field.setAsBackgroundMesh(field)
+
+        gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
+        gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
+        gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+        gmsh.option.setNumber("Mesh.Algorithm3D", 10)  # HXT
+        gmsh.option.setNumber("Mesh.ElementOrder", 1)
+
+        gmsh.model.mesh.generate(3)
+
+        # 单元区域编号：0=盒外空气，1=盒内空气，2=下磁体，3=上磁体。
+        volume_to_cell_tag = {tag: 1 for _, tag in maxwell_volumes}
+        volume_to_cell_tag.update({tag: 2 for _, tag in magnet1_volumes})
+        volume_to_cell_tag.update({tag: 3 for _, tag in magnet2_volumes})
+        self.mesh, self.cell_tag = gmsh_to_fealpy_tetra_mesh(volume_to_cell_tag)
+
+        if self.show:
+            gmsh.fltk.run()
+        gmsh.finalize()
+
+        self.space = LagrangeFESpace(self.mesh, p=self.p)
+        self.face_indices, self.face_normals = self.find_maxwell_faces()
+</script>
+
+<script type="text/plain" class="py-src" data-key="assemble" data-start="232" data-end="253" data-title="assemble()（L232–253）">
+    def assemble(self):
+        """
+        组装刚度和右端 (M, grad v)。
+
+        Returns
+        -------
+        stiffness : fealpy.sparse.CSRTensor
+            FEALPy 后端的全局刚度矩阵，对应积分 ``(grad(phi), grad(v))``。
+        rhs : TensorLike, shape (gdof,)
+            全局右端向量，对应永磁体区域上的 ``(M, grad(v))``。
+        """
+        form = BilinearForm(self.space)
+        form.add_integrator(ScalarDiffusionIntegrator(q=self.p + 1))
+        stiffness = form.assembly()
+
+        NC = self.mesh.number_of_cells()
+        magnetization = bm.zeros((NC, 1, 3), dtype=self.mesh.ftype)
+        magnetization = bm.set_at(magnetization, (self.cell_tag >= 2, 0, 2),MZ)
+        form = LinearForm(self.space)
+        form.add_integrator(GradSourceIntegrator(magnetization, q=self.p))
+        rhs = form.assembly()
+        return stiffness, rhs
+</script>
+
+<script type="text/plain" class="py-src" data-key="solve-linear" data-start="282" data-end="305" data-title="_solve_linear_system()（L282–305）">
+    def _solve_linear_system(self, stiffness, rhs):
+        """
+        用 PyAMG 预条件的 CG 求解相容的半正定 Neumann 系统。
+
+        Parameters
+        ----------
+        stiffness : fealpy.sparse.CSRTensor
+            FEALPy 全局刚度矩阵。
+        rhs : TensorLike, shape (gdof,)
+            FEALPy 后端的全局右端向量。
+
+        Returns
+        -------
+        phi : TensorLike, shape (gdof,)
+            转回 FEALPy 后端的磁标势自由度值。
+        """
+        matrix = stiffness.to_scipy().tocsr()
+        vector = bm.to_numpy(rhs)
+
+        multigrid = pyamg.smoothed_aggregation_solver(matrix, symmetry="symmetric")
+        preconditioner = multigrid.aspreconditioner(cycle="V")
+        phi, info = cg(matrix, vector, M=preconditioner, rtol=1.0e-10,
+                       atol=1.0e-12, maxiter=5000,)
+        return bm.from_numpy(phi)
+</script>
+
+<script type="text/plain" class="py-src" data-key="maxwell-faces" data-start="255" data-end="280" data-title="find_maxwell_faces()（L255–280）">
+    def find_maxwell_faces(self):
+        """
+        由盒内外空气区域的跳变找 Maxwell 面，并给出指向盒外的法向。
+
+        Returns
+        -------
+        face_indices : TensorLike, shape (NF,)
+            Maxwell 闭合面上的全局三角面编号。
+        face_normals : TensorLike, shape (NF, 3)
+            各三角面的单位法向，方向由盒内指向盒外。
+        """
+        face_to_cell = self.mesh.face_to_cell()[:, :2]
+        adjacent_tags = self.cell_tag[face_to_cell]
+        is_maxwell_face = (
+            ((adjacent_tags[:, 0] == 1) & (adjacent_tags[:, 1] == 0))
+            | ((adjacent_tags[:, 0] == 0) & (adjacent_tags[:, 1] == 1))
+        )
+        fidx = bm.nonzero(is_maxwell_face)[0]
+
+        face_center = self.mesh.entity_barycenter("face")[fidx]
+        fn = bm.copy(self.mesh.face_unit_normal(index=fidx))
+        box_center = bm.asarray(0.5*(MAXWELL_LO + MAXWELL_HI), dtype=bm.float64)
+
+        points_outward = bm.einsum("fi,fi->f", fn, face_center-box_center)>0.0
+        fn = bm.set_at(fn, ~points_outward, -fn[~points_outward])
+        return fidx, fn
+</script>
+
+<script type="text/plain" class="py-src" data-key="maxwell-force" data-start="350" data-end="386" data-title="compute_maxwell_force()（L350–386）">
+    def compute_maxwell_force(self, phi):
+        """
+        在面高斯点平均相邻 0/1 单元的磁场，再积分 Maxwell 应力。
+
+        Parameters
+        ----------
+        phi : TensorLike, shape (gdof,)
+            磁标势的有限元自由度值。
+        Returns
+        -------
+        force : TensorLike, shape (3,)
+            Maxwell 闭合面包围的下磁体所受力，单位 N。
+        """
+        mface = self.face_indices
+
+        quadrature = self.mesh.quadrature_formula(2 * self.p - 1, "face")
+        face_bc, weights = quadrature.get_quadrature_points_and_weights()
+
+        gbasis0 = self._cell_grad_basis_on_faces(mface, face_bc, side=0)
+        gbasis1 = self._cell_grad_basis_on_faces(mface, face_bc, side=1)
+
+        face2cell = self.mesh.face_to_cell()[mface]
+        cell2dof = self.space.cell_to_dof()
+
+        phi0 = phi[cell2dof[face2cell[:, 0]]]
+        phi1 = phi[cell2dof[face2cell[:, 1]]]
+
+        grad0 = bm.einsum("fi,fqid->fqd", phi0, gbasis0)
+        grad1 = bm.einsum("fi,fqid->fqd", phi1, gbasis1)
+        face_b = -0.5*MU0*(grad0 + grad1)
+
+        normals = self.face_normals[:, None, :]
+        b_dot_n = bm.sum(face_b * normals, axis=-1)
+        b_squared = bm.sum(face_b * face_b, axis=-1)
+        traction = (b_dot_n[:, :, None]*face_b - b_squared[:, :, None]*normals/2)/MU0
+        face_area = self.mesh.entity_measure("face")[mface]
+        return bm.einsum("f,q,fqi->i", face_area, weights, traction)
+</script>
+
+<script type="text/plain" class="py-src" data-key="helper" data-start="307" data-end="348" data-title="_cell_grad_basis_on_faces()（L307–348）">
+    def _cell_grad_basis_on_faces(self, face_indices, face_bc, side):
+        """
+        在相同物理面高斯点求指定一侧四面体的基函数梯度。
+
+        Parameters
+        ----------
+        face_indices : TensorLike, shape (NF,)
+            待计算的全局三角面编号。
+        face_bc : TensorLike, shape (NQ, 3)
+            三角面高斯点的重心坐标。
+        side : int
+            取 ``face_to_cell`` 中的第 0 或第 1 个相邻四面体。
+
+        Returns
+        -------
+        grad_basis : TensorLike, shape (NF, NQ, ldof, 3)
+            指定侧四面体基函数在面高斯点处的物理梯度。
+        """
+        face = self.mesh.entity("face")[face_indices]
+        cell = self.mesh.entity("cell")
+        face_to_cell = self.mesh.face_to_cell()[face_indices]
+        adjacent_cell = face_to_cell[:, side]
+        cell = cell[adjacent_cell]
+
+        NF = len(face_indices)
+        NQ = len(face_bc)
+        ldofs = self.space.number_of_local_dofs("cell")
+        result = bm.empty((NF, NQ, ldofs, 3), dtype=face_bc.dtype)
+
+        # 计算面顶点在相邻四面体局部顶点中的位置，形状为 (NF, 3)。
+        positions = bm.argmax(face[:, :, None] == cell[:, None, :], axis=2)
+        # grad_basis 要求一组单元共享相同的重心坐标，因此按最多 24 种排列分组。
+        patterns, pattern_index = bm.unique( positions, axis=0, return_inverse=True)
+
+        for i in range(len(patterns)):
+            group = bm.nonzero(pattern_index == i)[0]
+            cell_bc = bm.zeros((NQ, 4), dtype=face_bc.dtype)
+            cell_bc = bm.set_at(cell_bc, (slice(None), patterns[i]), face_bc)
+
+            gbasis = self.space.grad_basis(cell_bc, index=adjacent_cell[group])
+            result = bm.set_at(result, group, gbasis)
+        return result
+</script>
+
+<script type="text/plain" class="py-src" data-key="solve" data-start="388" data-end="408" data-title="solve(d)（L388–408）">
+    def solve(self, d):
+        """
+        为给定位移生成网格和空间，然后完成场求解与磁力计算。
+
+        Parameters
+        ----------
+        d : float
+            上磁体沿 x 方向的位移，单位 mm。
+
+        Returns
+        -------
+        result : dict
+            包含位移、磁标势以及上下磁体受力。
+        """
+        self.d = float(d)
+        self.build_gmsh_mesh()
+
+        stiffness, rhs = self.assemble()
+        phi = self._solve_linear_system(stiffness, rhs)
+        F0 = self.compute_maxwell_force(phi)
+        return {"d": self.d, "phi": phi, "F0": F0, "F1": -F0}
+</script>
+
+<script type="text/plain" class="py-src" data-key="main" data-start="536" data-end="554" data-title="main()（L536–554）">
+    @classmethod
+    def main(cls):
+        """
+        解析命令行参数并运行单点计算或完整位移扫描。
+        """
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument("--d", type=float, default=0.0)
+        parser.add_argument("--p", type=int, choices=(1, 2), default=2)
+        parser.add_argument("--scan", action="store_true")
+        args = parser.parse_args()
+        bm.set_backend("numpy")
+        if args.scan:
+            # 扫描模式：同时计算 p=1 和 p=2
+            cls.run_scan(None)
+        else:
+            case = cls(p=args.p)
+            result = case.solve(args.d)
+            print("F0 (lower magnet):", result["F0"], "N")
+            print("F1 (upper magnet):", result["F1"], "N")
+</script>
+
+<script>
+(function () {
+  var KEYWORDS = 'def|class|return|if|elif|else|for|while|import|from|as|with|try|except|finally|raise|pass|break|continue|lambda|None|True|False|and|or|not|in|is|global|nonlocal|yield|assert|del';
+
+  function esc(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function inline(s) {
+    return s.replace(
+      /(#.*$)|(@[A-Za-z_]\w*)|(\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|(r?b?u?f?(?:'''|"""|'[^'\n]*'|"[^"\n]*"))|(\b(?:def|class|return|if|elif|else|for|while|import|from|as|with|try|except|finally|raise|pass|break|continue|lambda|None|True|False|and|or|not|in|is|global|nonlocal|yield|assert|del)\b)/g,
+      function (m, c, d, n, str, kw) {
+        if (c)   return '<span class="c">' + m + '</span>';
+        if (d)   return '<span class="d">' + m + '</span>';
+        if (n)   return '<span class="n">' + m + '</span>';
+        if (str) return '<span class="s">' + m + '</span>';
+        if (kw)  return '<span class="k">' + m + '</span>';
+        return m;
+      }
+    );
+  }
+
+  function highlight(code) {
+    var out = '', state = null;
+    var lines = code.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var t = esc(lines[i]);
+      if (state) {
+        var idx = t.indexOf(state);
+        if (idx < 0) {
+          out += '<span class="s">' + t + '</span>';
+        } else {
+          out += '<span class="s">' + t.slice(0, idx + 3) + '</span>'
+               + inline(t.slice(idx + 3));
+          state = null;
+        }
+      } else {
+        var i3 = t.search(/'''|"""/);
+        if (i3 >= 0) {
+          var delim = t.slice(i3, i3 + 3);
+          var close = t.indexOf(delim, i3 + 3);
+          if (close >= 0) {
+            out += inline(t.slice(0, i3))
+                 + '<span class="s">' + t.slice(i3, close + 3) + '</span>'
+                 + inline(t.slice(close + 3));
+          } else {
+            out += inline(t.slice(0, i3)) + '<span class="s">' + t.slice(i3) + '</span>';
+            state = delim;
+          }
+        } else {
+          out += inline(t);
+        }
+      }
+      out += '\n';
+    }
+    return out;
+  }
+
+  function buildPanel(src) {
+    var fig = document.createElement('figure');
+    fig.className = 'code-panel';
+    fig.dataset.sourceKey = src.dataset.key;
+    var cap = document.createElement('figcaption');
+    cap.innerHTML = '<span class="fn">' + src.dataset.title + '</span>'
+      + '<span class="loc">double_magnet_benchmark.py · L' + src.dataset.start + '–' + src.dataset.end + '</span>'
+      + '<button class="copy" type="button">复制</button>'
+      + '<button class="toggle" type="button">收起</button>';
+    var pre = document.createElement('pre');
+    pre.className = 'code';
+    var start = parseInt(src.dataset.start, 10);
+    var hl = highlight(src.textContent.replace(/\n+$/, ''));
+    pre.innerHTML = hl.split('\n').map(function (l, i) {
+      return '<span class="l"><span class="ln">' + (start + i) + '</span>' + (l || ' ') + '</span>';
+    }).join('');
+    fig.appendChild(cap);
+    fig.appendChild(pre);
+    return fig;
+  }
+
+  var srcs = document.querySelectorAll('script.py-src');
+  srcs.forEach(function (s) {
+    var target = document.querySelector('div[data-code="' + s.dataset.key + '"]');
+    if (target) target.appendChild(buildPanel(s));
+  });
+
+  function copyText(text, btn) {
+    function done() {
+      var old = btn.textContent;
+      btn.textContent = '已复制';
+      setTimeout(function () { btn.textContent = old; }, 1200);
+    }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      done();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('button.toggle');
+    if (btn) {
+      var panel = btn.closest('.code-panel');
+      var collapsed = panel.classList.toggle('collapsed');
+      btn.textContent = collapsed ? '展开' : '收起';
+      return;
+    }
+    var copy = e.target.closest('button.copy');
+    if (copy) {
+      var key = copy.closest('.code-panel').dataset.sourceKey;
+      var source = document.querySelector('script.py-src[data-key="' + key + '"]');
+      if (source) copyText(source.textContent.replace(/^\n|\n+$/g, ''), copy);
+    }
+  });
+
+  var allCollapsed = false;
+  document.getElementById('collapseAll').addEventListener('click', function () {
+    allCollapsed = !allCollapsed;
+    document.querySelectorAll('.code-panel').forEach(function (panel) {
+      panel.classList.toggle('collapsed', allCollapsed);
+      panel.querySelector('.toggle').textContent = allCollapsed ? '展开' : '收起';
+    });
+    this.textContent = allCollapsed ? '展开代码' : '折叠代码';
+  });
+})();
+</script>
+<script>
+(function () {
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var backtop = document.getElementById('backtop');
+  var progress = document.getElementById('readProgress');
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section[id]'));
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a[href^="#"]'));
+
+  function setTheme(dark) {
+    root.dataset.theme = dark ? 'dark' : '';
+    themeBtn.textContent = dark ? '浅色' : '深色';
+  }
+  setTheme(false);
+  themeBtn.addEventListener('click', function () { setTheme(root.dataset.theme !== 'dark'); });
+  backtop.addEventListener('click', function () { window.scrollTo({top:0, behavior:'smooth'}); });
+  window.addEventListener('scroll', function () {
+    var max = document.documentElement.scrollHeight - innerHeight;
+    progress.style.width = (max > 0 ? scrollY / max * 100 : 0) + '%';
+    backtop.classList.toggle('show', scrollY > 650);
+  }, {passive:true});
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          links.forEach(function (a) {
+            a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, {rootMargin:'-22% 0px -65% 0px'});
+    sections.forEach(function (section) { observer.observe(section); });
+  }
+})();
+</script>
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['\\(', '\\)']] },
+    svg: { fontCache: 'local' }
+  };
+</script>
+<script src="mathjax/tex-svg.js"></script>
+</body>
+</html>

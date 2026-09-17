@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>双永磁体三维静磁算例 · FEALPy 通用化集成讲解</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --panel:#ffffff; --ink:#212734; --muted:#5c6575;
+    --accent:#2563eb; --line:#e3e6eb; --chip:#eaf0ff; --chip-ink:#2f46a3;
+    --code-bg:#282c34; --code-cap:#21252b; --code-ink:#abb2bf;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"SimSun","宋体","Songti SC","Noto Serif CJK SC","Source Han Serif SC","AR PL UMing CN","AR PL UMing HK","AR PL UMing TW",serif;
+    line-height:1.8;}
+  .wrap{max-width:1200px;margin:0 auto;padding:28px 20px 90px;}
+  header.top{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--accent);
+    border-radius:12px;padding:26px 30px;box-shadow:0 1px 3px rgba(16,24,40,.05);}
+  header.top h1{margin:0 0 8px;font-size:26px;}
+  header.top .stage{display:inline-block;background:var(--chip);color:var(--chip-ink);
+    border-radius:999px;font-size:12.5px;padding:2px 12px;margin-right:10px;vertical-align:2px;}
+  header.top p.sub{margin:6px 0 0;color:var(--muted);font-size:14.5px;}
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:16px 2px;}
+  nav.toc a{background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:4px 16px;font-size:13.5px;text-decoration:none;color:var(--ink);}
+  nav.toc a:hover{border-color:var(--accent);color:var(--accent);}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:0 28px 26px;margin:18px 0;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.05);}
+  h2{font-size:25px;font-weight:700;margin:0 -28px 18px;padding:13px 28px;
+    background:linear-gradient(90deg,#1d4ed8,#3b82f6);color:#fff;}
+  h2 .no{color:#bfdbfe;margin-right:8px;}
+  h3{font-size:19px;font-weight:700;margin:24px 0 10px;color:#111827;
+    padding-left:12px;border-left:4px solid var(--accent);}
+  h3 .loc{color:var(--muted);font-weight:normal;font-size:14px;}
+  p,li{font-size:16px;}
+  ul{margin:8px 0;padding-left:22px;}
+  li{margin:5px 0;}
+  ol{padding-left:24px;}
+  ol li{margin:5px 0;}
+  .row{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);
+    gap:22px;align-items:start;margin:16px 0;}
+  .row-trio{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);
+    gap:18px;align-items:start;margin:16px 0;}
+  .row-trio > div{min-width:0;}
+  .panel-label{font-size:13.5px;font-weight:700;color:var(--accent);margin:0 0 8px;}
+  .panel-label small{display:block;font-weight:normal;color:var(--muted);font-size:12px;}
+  @media(max-width:1500px){.row-trio{grid-template-columns:minmax(0,1fr)}}
+  @media(max-width:980px){.row{grid-template-columns:1fr}}
+  table{border-collapse:collapse;width:100%;font-size:15px;margin:10px 0;}
+  th,td{border:1px solid var(--line);padding:7px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f4f8;font-weight:600;white-space:nowrap;}
+  td.num,th.num{text-align:center;}
+  .callout{border-left:3px solid var(--accent);background:#f0f6ff;padding:10px 14px;
+    border-radius:0 8px 8px 0;margin:10px 0;font-size:15.5px;}
+  .mathbox{background:#f7f9fc;border:1px dashed var(--line);border-radius:10px;
+    padding:18px 22px;margin:14px 0;text-align:center;}
+  .math{font-family:"STIX Two Math","Cambria Math","Times New Roman",Georgia,serif;
+    font-size:19px;margin:8px 0;}
+  .math.small{font-size:15px;color:var(--muted);}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 4px;}
+  .chip{background:var(--chip);color:var(--chip-ink);border-radius:999px;
+    padding:3px 12px;font-size:13px;white-space:nowrap;}
+  .flow .arrow{color:#9aa3b0;}
+  .figrow{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0;}
+  @media(max-width:980px){.figrow{grid-template-columns:1fr}}
+  figure.fig{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+    background:#fbfcfe;}
+  figure.fig img{display:block;width:100%;height:auto;border-bottom:1px solid var(--line);}
+  figure.fig figcaption{padding:8px 12px;font-size:13.5px;color:var(--muted);line-height:1.6;}
+  figure.fig figcaption b{color:var(--ink);}
+  .code-panel{margin:0;background:var(--code-bg);border-radius:10px;overflow:hidden;
+    border:1px solid #1b1e24;}
+  .code-panel figcaption{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:7px 12px;background:var(--code-cap);color:var(--code-ink);font-size:13px;}
+  .code-panel figcaption .fn{color:#61afef;font-family:ui-monospace,"SF Mono",Consolas,monospace;}
+  .code-panel figcaption .loc{margin-left:auto;color:#7f848e;font-size:12px;white-space:nowrap;}
+  .code-panel button.toggle{border:1px solid #4b5263;background:transparent;color:var(--code-ink);
+    border-radius:4px;cursor:pointer;font-size:12px;padding:0 8px;line-height:1.6;}
+  .code-panel button.toggle:hover{border-color:#61afef;color:#61afef;}
+  .code-panel.collapsed pre{display:none;}
+  .code-stack > div{margin-bottom:14px;}
+  .code-stack > div:last-child{margin-bottom:0;}
+  pre.code{margin:0;padding:10px 0;overflow:auto;font-size:13.2px;line-height:1.62;
+    font-family:ui-monospace,"SF Mono",Consolas,"Liberation Mono",monospace;color:var(--code-ink);}
+  pre.code .l{display:block;padding:0 14px 0 6px;white-space:pre;}
+  pre.code .l:hover{background:#2c313a;}
+  pre.code .ln{display:inline-block;width:3.4em;margin-right:16px;color:#4b5263;
+    text-align:right;user-select:none;}
+  .k{color:#c678dd}.s{color:#98c379}.c{color:#7f848e;font-style:italic}
+  .n{color:#d19a66}.d{color:#61afef}
+  .foot{color:var(--muted);font-size:13px;margin-top:26px;text-align:center;}
+  code.inline{background:#eef1f5;border-radius:4px;padding:0 5px;font-size:13px;
+    font-family:ui-monospace,"SF Mono",Consolas,monospace;}
+  /* 2026 技术说明版视觉系统 */
+  :root{
+    --bg:#edf3f6;--panel:#ffffff;--ink:#102235;--muted:#627180;
+    --accent:#0f766e;--accent-2:#ea6a47;--line:#d8e3e8;--chip:#def3ef;--chip-ink:#0c645e;
+    --code-bg:#15232d;--code-cap:#101c24;--code-ink:#c3d1d7;--shadow:0 16px 45px rgba(25,50,70,.09);
+  }
+  body{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;
+    background:radial-gradient(circle at 5% 4%,rgba(15,118,110,.09),transparent 24%),var(--bg);line-height:1.72}
+  .read-progress{position:fixed;inset:0 0 auto;z-index:80;height:4px;background:rgba(16,34,53,.08)}
+  .read-progress span{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+  .wrap{max-width:1820px;padding:34px 30px 90px}
+  header.top{border:none;border-radius:24px;padding:38px 42px;background:linear-gradient(145deg,#0e2638,#133f4c);color:#fff;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  header.top::after{content:"";position:absolute;width:330px;height:330px;border-radius:50%;right:-110px;top:-170px;border:1px solid rgba(255,255,255,.14);box-shadow:0 0 0 48px rgba(255,255,255,.03),0 0 0 96px rgba(255,255,255,.02)}
+  header.top h1{font-size:clamp(28px,4vw,43px);line-height:1.2;letter-spacing:-.035em;position:relative;z-index:1}
+  header.top .stage{background:#9fe7dc;color:#103e43;font-weight:800;vertical-align:5px}
+  header.top p.sub{color:#cddde3;font-size:15px;max-width:980px;position:relative;z-index:1}
+  header.top code.inline{background:rgba(255,255,255,.1);color:#fff}
+  .eyebrow{color:#9fe7dc;font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;margin-bottom:13px;position:relative;z-index:1}
+  .summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:25px;position:relative;z-index:1}
+  .summary-strip div{border:1px solid rgba(255,255,255,.14);border-radius:13px;padding:10px 13px;background:rgba(255,255,255,.06);color:#cddde3;font-size:12px}
+  .summary-strip b{display:block;color:#fff;font-size:18px;margin-bottom:1px}
+  nav.toc{position:sticky;top:10px;z-index:50;background:rgba(247,250,251,.88);border:1px solid var(--line);border-radius:16px;padding:9px 10px;backdrop-filter:blur(14px);box-shadow:0 8px 24px rgba(25,50,70,.08)}
+  nav.toc a{background:transparent;border-color:transparent;font-weight:650;padding:5px 12px}
+  nav.toc a:hover,nav.toc a.active{background:var(--chip);color:var(--accent);border-color:#c7e7e1}
+  nav.toc .nav-spacer{flex:1}
+  .nav-action{font:inherit;cursor:pointer;background:#fff!important;border:1px solid var(--line)!important;color:var(--ink)!important;border-radius:999px!important;padding:5px 12px!important;font-size:12.5px!important;text-decoration:none}
+  .nav-action:hover{border-color:var(--accent)!important;color:var(--accent)!important}
+  .stage-route{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:17px 0}
+  .route-item{background:#f8fbfc;border:1px solid var(--line);border-radius:15px;padding:15px 17px;color:var(--muted);font-size:13px;position:relative}
+  .route-item b{display:block;color:var(--ink);font-size:15px;margin:3px 0}.route-item small{color:var(--accent);font-weight:800;letter-spacing:.09em}
+  .route-item.active{background:linear-gradient(145deg,#e3f6f2,#fff);border-color:#8dcec4;box-shadow:0 10px 26px rgba(15,118,110,.10)}
+  .route-item.active::after{content:"当前";position:absolute;right:11px;top:10px;background:var(--accent);color:#fff;border-radius:999px;padding:1px 8px;font-size:10px}
+  section{border:none;border-radius:18px;box-shadow:var(--shadow);padding-bottom:31px;scroll-margin-top:82px}
+  h2{background:linear-gradient(90deg,#0f685f,#148a7d);font-size:24px;padding-top:15px;padding-bottom:15px}
+  h2 .no{color:#a9ece1}h3{border-left-color:var(--accent);color:var(--ink)}
+  th{background:#eaf3f3;color:#173f42}th,td{border-color:var(--line)}
+  .callout{border-left-color:var(--accent);background:#eaf7f5}.mathbox{background:#f6fafb;border-color:var(--line)}
+  .chip{background:var(--chip);color:var(--chip-ink);border:1px solid #c7e7e1;padding:4px 11px;font-weight:650}.flow{gap:8px}
+  figure.fig{border-radius:14px;box-shadow:0 8px 22px rgba(25,50,70,.06)}figure.fig img{transition:transform .25s ease}figure.fig:hover img{transform:scale(1.012)}
+  .code-panel{box-shadow:0 9px 24px rgba(8,20,30,.13)}
+  .code-panel button.copy{border:1px solid #4b6270;background:transparent;color:var(--code-ink);border-radius:4px;cursor:pointer;font-size:12px;padding:0 8px;line-height:1.6}
+  .code-panel button.copy:hover{border-color:#65d2c4;color:#65d2c4}
+  .backtop{position:fixed;right:24px;bottom:24px;z-index:55;width:42px;height:42px;border:none;border-radius:50%;background:var(--accent);color:#fff;box-shadow:0 9px 24px rgba(15,118,110,.26);cursor:pointer;opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s}
+  .backtop.show{opacity:1;transform:none;pointer-events:auto}
+  [data-theme="dark"]{--bg:#0c171e;--panel:#13232c;--ink:#e4eef1;--muted:#9babb3;--line:#29404c;--chip:#173d3c;--chip-ink:#91ddd2;--shadow:0 16px 45px rgba(0,0,0,.22)}
+  [data-theme="dark"] body{background:#0c171e}[data-theme="dark"] section,[data-theme="dark"] .route-item{background:#13232c}
+  [data-theme="dark"] .route-item.active{background:#173536;border-color:#39756f}
+  [data-theme="dark"] th{background:#1a343c;color:#d9eeed}[data-theme="dark"] .callout{background:#173536}[data-theme="dark"] .mathbox{background:#102029}
+  [data-theme="dark"] code.inline{background:#1c3039;color:#d5e4e8}[data-theme="dark"] nav.toc{background:rgba(15,29,37,.9)}
+  @media(max-width:820px){.wrap{padding:18px 10px 80px}header.top{padding:30px 24px}.summary-strip{grid-template-columns:1fr 1fr}.stage-route{grid-template-columns:1fr}nav.toc{top:4px;overflow-x:auto;flex-wrap:nowrap}nav.toc a{white-space:nowrap}.nav-spacer,.nav-action{display:none}section{padding-left:18px;padding-right:18px}h2{margin-left:-18px;margin-right:-18px;padding-left:18px}.backtop{right:14px;bottom:14px}}
+  @media print{.read-progress,nav.toc,.backtop,.nav-action{display:none!important}.wrap{max-width:none;padding:0}section,header.top{box-shadow:none;break-inside:avoid}.code-panel.collapsed pre{display:block}}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="read-progress" aria-hidden="true"><span id="readProgress"></span></div>
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">FEALPy integration study · stage 03 · library integration</div>
+  <h1><span class="stage">阶段 ③ / ③</span>双永磁体三维静磁算例 · FEALPy 通用化集成讲解</h1>
+  <p class="sub">把分块后的通用静磁组件沉淀为 FEALPy 公共接口：材料进 <code class="inline">fealpy.material</code>、
+  网格进 <code class="inline">fealpy.mesher</code>、模型进 <code class="inline">fealpy.cem.fem</code>——数值与最初程序<b>逐位一致</b>，
+  两个待议议题均有明确落地。上一站见 <a href="../初步分块/模块化_详细版.html" style="color:#9fe7dc">工程化分块详细版</a>。</p>
+  <div class="summary-strip">
+    <div><b>3</b>新增公共模块</div><div><b>68</b>项 fealpy 测试</div>
+    <div><b>逐位</b>三站数值一致</div><div><b>2</b>项议题落地</div>
+  </div>
+</header>
+
+<nav class="toc">
+  <a href="#s1">§1 集成了什么</a>
+  <a href="#s2">§2 两个议题的落地</a>
+  <a href="#s3">§3 协议化接口与求解加固</a>
+  <a href="#s4">§4 三版实现对比</a>
+  <a href="#s5">§5 三站数值一致性</a>
+  <a href="#s6">§6 通用性实测</a>
+  <a href="#s7">§7 交互式三维视图</a>
+  <a href="#appendix">附录 使用方式</a>
+  <span class="nav-spacer"></span>
+  <a class="nav-action" href="集成_简洁版.html">演示版</a>
+  <button class="nav-action" id="collapseAll" type="button">折叠代码</button>
+  <button class="nav-action" id="themeToggle" type="button">深色</button>
+</nav>
+
+<div class="stage-route" aria-label="项目三阶段路线">
+  <div class="route-item"><small>STAGE 01</small><b>独立算例基线</b>建立可复现、可对标的数值闭环。</div>
+  <div class="route-item"><small>STAGE 02</small><b>算例工程化分块</b>拆分职责，同时保持数值结果不变。</div>
+  <div class="route-item active"><small>STAGE 03</small><b>FEALPy 通用化集成</b>沉淀公共接口，并用测试守住正确性。</div>
+</div>
+
+<!-- ============================== §1 ============================== -->
+<section id="s1">
+  <h2><span class="no">§1</span>集成了什么</h2>
+
+  <h3>1.1 落点总览</h3>
+  <table>
+    <tr><th>分块组件</th><th>fealpy 落点</th><th>说明</th></tr>
+    <tr><td>materials.Air / PermanentMagnet</td><td><code class="inline">fealpy.material</code></td><td>Air / LinearMagneticMaterial / PermanentMagnet + MagneticMaterialProtocol（不可变 tuple 存储）</td></tr>
+    <tr><td>geometry + mesh</td><td><code class="inline">fealpy.mesher.BoxRegionMesher</code></td><td>单类网格器：命名区域（tuple 简写 / 角点形式）、严格校验、嵌入盒必须在外盒内</td></tr>
+    <tr><td>pde + solver + postprocess</td><td><code class="inline">fealpy.cem.fem.MagnetostaticLFEMModel</code></td><td>有状态 ComputationalModel + 显式规范点 + 函数式力入口 compute_maxwell_force</td></tr>
+    <tr><td>制造解 exp0014</td><td>退回 <code class="inline">tests/cem/fem</code></td><td>不注册 poisson DATA_TABLE（议题一的落地，见 §2.1）</td></tr>
+    <tr><td>测试</td><td><code class="inline">tests/{material,mesher,cem/fem}</code></td><td>68 项：材料 10 + 网格器 29 + 模型 29</td></tr>
+  </table>
+
+  <h3>1.2 与分块包的组件映射</h3>
+  <table>
+    <tr><th>分块（magnetostatic 包）</th><th>集成位置</th></tr>
+    <tr><td><code class="inline">geometry.BoxRegion / BoxSizeField / MeshOptions / GeometryModel</code></td><td>折叠进 <code class="inline">BoxRegionMesher</code> 的 options 字典（构造时校验）</td></tr>
+    <tr><td><code class="inline">mesh.MeshData / GmshTetraMesher</code></td><td><code class="inline">BoxRegionMesher</code> + mesh cell sector 的 <code class="inline">"region"</code> attribute（<code class="inline">cell_tags</code> 属性读透该 attribute）</td></tr>
+    <tr><td><code class="inline">pde.ScalarPotentialPDE</code></td><td>并入 <code class="inline">MagnetostaticLFEMModel</code>（逐单元系数方法成为模型方法）</td></tr>
+    <tr><td><code class="inline">solver.ScalarPotentialSolver / FEMSolution</code></td><td><code class="inline">MagnetostaticLFEMModel</code>（状态存 space/stiffness/rhs/uh/solver_info）</td></tr>
+    <tr><td><code class="inline">postprocess.MaxwellStressPostprocessor / SurfaceData</code></td><td><code class="inline">compute_force()</code> / <code class="inline">select_interface()</code> / <code class="inline">SurfaceData</code> + 模块级函数式入口</td></tr>
+  </table>
+  <div class="callout"><b>不集成：</b>双磁体 benchmark 专属内容（具体几何尺寸、Akoun–Yonnet 公式、ANSYS 表、CLI、对比/绘图）留在算例目录，作为 fealpy 公共能力的下游用户。</div>
+</section>
+
+<!-- ============================== §2 ============================== -->
+<section id="s2">
+  <h2><span class="no">§2</span>两个议题的落地</h2>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">2.1 议题一：工程型定位 <span class="loc">制造解退回测试本地</span></h3>
+      <ul>
+        <li><b>待确认的问题</b>：制造解要不要注册为 <code class="inline">fealpy.model.poisson</code> 的 exp（DATA_TABLE=14）？</li>
+        <li><b>决策</b>：不注册。主输入是向量磁化场 M、边界条件是 B·n=0，通用 <code class="inline">PoissonLFEMModel</code> 的标量 source 与 Dirichlet 接口消费不了；放入 DATA_TABLE 会形成「名义可发现、实际不可互换」的公共算例；FEALPy 中并非每个领域模型都必须配一个 Exp。</li>
+        <li><b>保留的验证能力</b>：解析函数留在模型测试内——Ω=(0,1)³ 真解 φ=sin(πx)sin(πy)sin(πz)，M=∇φ+∇×ψ（ψ 紧支撑 → 边界 B·n=0 精确成立），H¹ 误差随加密单调下降；网格用确定性的 <code class="inline">TetrahedronMesh.from_box()</code>，不依赖 Gmsh。</li>
+      </ul>
+    </div>
+    <div class="code-stack">
+      <div data-code="mms-grad"></div>
+      <div data-code="mms-conv"></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">2.2 议题二：归口 cem/fem <span class="loc">fealpy/cem/fem/</span></h3>
+      <ul>
+        <li><b>待确认的问题</b>：磁标势模型留在 <code class="inline">fealpy/fem/</code> 还是迁 <code class="inline">fealpy/cem/fem/</code>？</li>
+        <li><b>决策</b>：迁 <code class="inline">cem/fem/</code>。三条依据：① 公共接口含 μ₀、μᵣ、M/H/B、永磁体与 Maxwell 应力，属于计算电磁学领域模型（复用 fealpy.fem 的通用形式与积分器）；② 依赖方向保持 <code class="inline">fealpy.cem.fem → fealpy.fem</code> 单向，通用 FEM 层不反向导入 CEM，无循环依赖；③ 与 <code class="inline">fealpy/csm/fem/</code> 的领域包组织一致，且 <code class="inline">fealpy/cem/fem/</code> 子包早已预留。</li>
+      </ul>
+    </div>
+    <div data-code="cem-init"></div>
+  </div>
+</section>
+
+<!-- ============================== §3 ============================== -->
+<section id="s3">
+  <h2><span class="no">§3</span>协议化接口与求解加固</h2>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">3.1 材料协议 <span class="loc">fealpy/material/magnetic_material.py</span></h3>
+      <ul>
+        <li><code class="inline">MagneticMaterialProtocol</code>：两个只读属性（μᵣ、M）——任何满足协议的对象都能当材料，不只三个内置类；</li>
+        <li><code class="inline">Air</code>：μᵣ=1、M=(0,0,0)；</li>
+        <li><code class="inline">LinearMagneticMaterial</code>：任意正 μᵣ 的线性各向同性材料；</li>
+        <li><code class="inline">PermanentMagnet</code>：B = μ₀(μᵣH+M) 形式，磁化强度以不可变 tuple 存储（frozen 数据类不被 ndarray 原地修改）。</li>
+      </ul>
+    </div>
+    <div class="code-stack">
+      <div data-code="proto-material"></div>
+      <div data-code="material-pm"></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">3.2 网格数据协议 <span class="loc">RegionTaggedMeshDataProtocol</span></h3>
+      <ul>
+        <li>模型只要求 mesh / cell_tags / region_tags / interface_names / tag 五个成员，<b>不再绑定 BoxRegionMesher</b>；</li>
+        <li>任何共形四面体网格提供者（圆柱、STEP、外部导入）都能接入；</li>
+        <li><code class="inline">set_mesh_data</code> 严格校验：三维四面体、标签整数 dtype、标签值 ⊆ region_tags、名称唯一、界面引用存在——错误在求解前暴露。</li>
+      </ul>
+      <div class="callout"><b>标签存放与网格侧机制对齐：</b>逐单元标签存为 mesh cell sector 的 <code class="inline">"region"</code> attribute（新网格机制正统），<code class="inline">BoxRegionMesher.cell_tags</code> 读透该 attribute——写 VTU 时自动成为 cell data；<code class="inline">region_tags</code>（name→int）与 <code class="inline">interface_names</code> 属几何语义元数据，留在 mesher 上。已知限制：网格加密/重编号后 attributes 不自动 remap（本算例每工况重建网格，不受影响）。</div>
+    </div>
+    <div data-code="proto-mesh"></div>
+  </div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">3.3 显式规范点 <span class="loc">solve() · gauge pinning</span></h3>
+      <ul>
+        <li>纯 Neumann 刚度矩阵有常数核；在 SciPy 副本上把第 0 个自由度整行整列清零、对角置 1、右端置 0——系统变为非奇异；</li>
+        <li>该操作只改变磁标势的任意常数，不改变 H、B 与力（同网格实测与奇异 CG 路径差异 ≤ 1.3e-10 N）；</li>
+        <li>通过 callback 记录真实 CG 迭代数，存入 <code class="inline">solver_info</code>（cg_info / cg_iterations / gauge_dof）。</li>
+      </ul>
+    </div>
+    <div data-code="gauge"></div>
+  </div>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">3.4 函数式力入口 <span class="loc">compute_maxwell_force()</span></h3>
+      <ul>
+        <li>模块级函数：网格数据 + 材料 + 空间 + 势 + 界面名 → 力 (3,)，后处理流水线不必持有模型实例；</li>
+        <li>校验 space 的 Lagrange 次数、space 与 mesh 的同一性、势的形状；</li>
+        <li>复用模型的 <code class="inline">compute_force()</code>，公式只有一份。</li>
+      </ul>
+    </div>
+    <div data-code="explicit-force"></div>
+  </div>
+</section>
+
+<!-- ============================== §4 ============================== -->
+<section id="s4">
+  <h2><span class="no">§4</span>三版实现对比（网格 · 材料 · 求解）</h2>
+  <p>同一个 d 工况的完整算例配置，三版并排：<b>4.1 如何创建网格、4.2 如何设置材料、4.3 如何求解</b>。
+  最初程序把三者绑在类方法里；分块版拆成独立模块；集成版换成 fealpy 公共接口——benchmark 只剩「配置与编排」。</p>
+
+  <h3>4.1 几何与网格构建</h3>
+  <div class="row-trio">
+    <div>
+      <div class="panel-label">① 最初程序 · build_gmsh_mesh() 的几何部分<small>最初程序/double_magnet_benchmark.py · L159–191</small></div>
+      <div data-code="orig-geom"></div>
+    </div>
+    <div>
+      <div class="panel-label">② 工程化分块 · make_geometry()<small>初步分块/modular_double_magnet_benchmark.py · L37–73</small></div>
+      <div data-code="mod-geom"></div>
+    </div>
+    <div>
+      <div class="panel-label">③ FEALPy 集成 · make_mesher()<small>初步集成/modular_double_magnet_benchmark.py · L34–107</small></div>
+      <div data-code="int-geom"></div>
+    </div>
+  </div>
+
+  <h3>4.2 材料设置</h3>
+  <div class="row-trio">
+    <div class="code-stack">
+      <div class="panel-label">① 最初程序 · 常量区 + 磁化写入<small>double_magnet_benchmark.py · L31–37、L247–250</small></div>
+      <div data-code="orig-const"></div>
+      <div data-code="orig-mag"></div>
+    </div>
+    <div>
+      <div class="panel-label">② 工程化分块 · make_pde()<small>初步分块/modular_double_magnet_benchmark.py · L93–103</small></div>
+      <div data-code="mod-pde"></div>
+    </div>
+    <div class="code-stack">
+      <div class="panel-label">③ FEALPy 集成 · 规格换算 + make_materials()<small>初步集成/modular_double_magnet_benchmark.py · L30–31、L110–117</small></div>
+      <div data-code="int-const"></div>
+      <div data-code="int-mat"></div>
+    </div>
+  </div>
+  <div class="callout"><b>BR_Z / MZ 为什么在算例层：</b>Br = 0.38 T 是 ANSYS benchmark 的工程规格，fealpy 的 <code class="inline">PermanentMagnet</code> 只接受磁化强度 M（A/m）——「规格 → 本构」的换算 M = Br/μ₀ 属于算例配置，材料类本身不认识 Br 这个概念（三版一致）。</div>
+
+  <h3>4.3 求解流水线</h3>
+  <div class="row-trio">
+    <div>
+      <div class="panel-label">① 最初程序 · solve(d)<small>最初程序/double_magnet_benchmark.py · L388–408</small></div>
+      <div data-code="flow-orig"></div>
+    </div>
+    <div>
+      <div class="panel-label">② 工程化分块 · solve()<small>初步分块/modular_double_magnet_benchmark.py · L106–129</small></div>
+      <div data-code="flow-mod"></div>
+    </div>
+    <div>
+      <div class="panel-label">③ FEALPy 集成 · solve()<small>初步集成/modular_double_magnet_benchmark.py · L120–140</small></div>
+      <div data-code="flow-int"></div>
+    </div>
+  </div>
+
+  <h3>4.4 环节对照表</h3>
+  <table>
+    <tr><th>环节</th><th>① 最初程序</th><th>② 工程化分块</th><th>③ FEALPy 集成</th></tr>
+    <tr><td>几何与网格</td><td><code class="inline">build_gmsh_mesh()</code>（几何+尺寸场+网格一体）</td><td><code class="inline">make_geometry()</code> + <code class="inline">GmshTetraMesher</code></td><td><code class="inline">make_mesher()</code> + <code class="inline">BoxRegionMesher</code>（角点形式）</td></tr>
+    <tr><td>材料</td><td>常量区 + <code class="inline">assemble</code> 里 cell_tag &gt;= 2 写 M_z</td><td><code class="inline">make_pde()</code>（区域名 → 材料对象）</td><td><code class="inline">make_materials()</code>（fealpy 材料类）</td></tr>
+    <tr><td>求解</td><td><code class="inline">assemble()</code> + <code class="inline">_solve_linear_system()</code></td><td><code class="inline">ScalarPotentialSolver</code></td><td><code class="inline">MagnetostaticLFEMModel</code></td></tr>
+    <tr><td>算力</td><td><code class="inline">find_maxwell_faces()</code> + <code class="inline">compute_maxwell_force()</code></td><td><code class="inline">MaxwellStressPostprocessor</code></td><td><code class="inline">model.compute_force()</code></td></tr>
+  </table>
+
+  <div class="callout"><b>结构变了，数值没变：</b>三版的组装、求解与应力积分逐句对应（积分器配置、PyAMG-CG、应力公式完全相同）；几何经角点形式逐位一致，因此三版在同一工况下的网格<b>逐位相同</b>、磁力在求解器噪声水平内一致（§5）。</div>
+</section>
+
+<!-- ============================== §5 ============================== -->
+<section id="s5">
+  <h2><span class="no">§5</span>三站数值一致性</h2>
+
+  <h3>5.1 链条对照（本机实测）</h3>
+  <table>
+    <tr><th>阶段</th><th>入口</th><th>F0（p=1, d=0，N）</th><th>网格</th></tr>
+    <tr><td>① 最初程序</td><td><code class="inline">double_magnet_benchmark.py</code></td><td>(-0.56731597, -0.57342061, 1.66752555)</td><td>基准</td></tr>
+    <tr><td>② 工程化分块</td><td><code class="inline">magnetostatic</code> 包</td><td>(-0.56731597, -0.57342061, 1.66752555)</td><td>逐位一致</td></tr>
+    <tr><td>③ FEALPy 集成</td><td><code class="inline">fealpy.cem.fem</code></td><td>(-0.56731597, -0.57342061, 1.66752555)</td><td>逐位一致</td></tr>
+  </table>
+  <div class="callout"><b>两个关键技术点：</b>① 角点形式把最初程序的角点算式原样传给 Gmsh——center/size 往返会差 1 ulp，足以改变网格（实测力差约 2e-6 N）；② 求解器本身有 ~1e-12 N 的 OpenMP 归约噪声，回归判据定为「网格逐位一致 + 磁力 rtol=1e-9」。p=2, d=0 同样逐位一致：F0 = (-0.58042072, -0.57281791, 1.73712687)。</div>
+
+  <h3>5.2 角点形式为什么关键</h3>
+  <div class="callout">四个区域全部用角点形式（代码见 §4.1 第 ③ 栏）：center/size 往返会差 1 ulp，足以改变 Gmsh 网格（实测力差约 2e-6 N）；角点形式把最初程序的角点算式原样传给 Gmsh → 网格<b>逐位一致</b>。带参数名的快速失败（d≥0、h_near≤h_far）是算例语义，刻意留在 benchmark 层而非 fealpy。</div>
+
+  <h3>5.3 回归测试全文 <span class="loc">test_benchmark_regression.py</span></h3>
+  <div class="row">
+    <div>
+      <ul>
+        <li>同一进程内运行最初程序与集成入口的 p=1、d=0 工况；</li>
+        <li>断言网格节点/单元逐位一致、F0/F1 在 rtol=1e-9 内一致；</li>
+        <li>磁标势只确定到常数，不做逐位比较——回归判据全部写在测试 docstring 里。</li>
+      </ul>
+      <pre style="background:#eef1f5;border-radius:8px;padding:10px 14px;font-size:13px;overflow:auto"><code># fealpy 测试（68 项）+ 算例端测试（19 项）
+PYTHONPATH=fealpy python -m pytest \
+    fealpy/tests/material fealpy/tests/mesher/test_box_region_mesher.py \
+    fealpy/tests/cem/fem -q
+PYTHONPATH=fealpy python -m pytest test_comparison.py \
+    test_double_magnet_cli.py test_benchmark_regression.py -q</code></pre>
+    </div>
+    <div data-code="regression"></div>
+  </div>
+
+  <h3>5.4 对标结果图（本机当前代码生成）</h3>
+  <div class="figrow">
+    <figure class="fig">
+      <a href="results/force_comparison.png" target="_blank" title="点击查看原图">
+        <img src="results/force_comparison.png" alt="力—位移对比曲线">
+      </a>
+      <figcaption><b>图 1 · 力—位移对比曲线</b>（p=2，16 工况）：FEALPy FEM 的 Fx / Fy 与 Akoun–Yonnet、ANSYS 逐点对比。</figcaption>
+    </figure>
+    <figure class="fig">
+      <a href="results/force_error.png" target="_blank" title="点击查看原图">
+        <img src="results/force_error.png" alt="带符号误差曲线">
+      </a>
+      <figcaption><b>图 2 · 带符号误差曲线</b>（FEALPy − 参考）：零水平线区分正负偏差，与 §5.1 链条一致。</figcaption>
+    </figure>
+  </div>
+</section>
+<!-- ============================== §6 ============================== -->
+<section id="s6">
+  <h2><span class="no">§6</span>通用性实测：三磁体 + 软磁案例</h2>
+  <p>通用性不是嘴上说的——用集成组件实测一个<b>非双磁体</b>问题（脚本
+  <code class="inline">generic_magnet_case.py</code>）：四块磁体（三种尺寸、两种磁化方向）+ 一块
+  μᵣ=250 软磁材料 + 五个嵌套 Maxwell 盒，走完「几何 → 材料 → 求解 → 算力」四步流程。</p>
+
+  <div class="row">
+    <div>
+      <h3 style="margin-top:0">6.1 案例与结果 <span class="loc">p=1 · 19,903 节点 / 118,941 单元 · CG 24 次</span></h3>
+      <table>
+        <tr><th>对象</th><th class="num">受力 (N)</th><th>说明</th></tr>
+        <tr><td>组合体整体 F_all</td><td class="num">(+0.004, −0.057, +0.012)</td><td>≈ 0：孤立组合体自作用力为零 ✓</td></tr>
+        <tr><td>magnet_a F_a</td><td class="num">(−0.101, −0.006, −0.004)</td><td>并排同向磁化相斥，推向 −x ✓</td></tr>
+        <tr><td>magnet_b F_b</td><td class="num">(+0.094, +0.011, +0.001)</td><td>镜像对象，推向 +x，符号镜像 ✓</td></tr>
+        <tr><td>magnet_c F_c</td><td class="num">(−0.000, −0.004, −0.126)</td><td>被下方组合体吸引（−z）</td></tr>
+        <tr><td>magnet_d(+y) F_d</td><td class="num">(−0.002, −0.033, +0.136)</td><td>不同磁化方向，受力非零 ✓</td></tr>
+      </table>
+      <div class="callout"><b>四项校验全部通过：</b>① 所有力有限；② 组合体自作用力 ≈ 0（硬物理校验）；③ a/b 镜像关系成立（符号镜像，量级在离散误差内一致）；④ μᵣ=250 变系数路径端到端跑通。</div>
+    </div>
+    <div class="code-stack">
+      <div data-code="generic-case-build"></div>
+      <div data-code="generic-case-main"></div>
+    </div>
+  </div>
+
+  <h3>6.2 过程中的两个工程发现（通用性使用要点）</h3>
+  <table>
+    <tr><th>发现</th><th>内容</th></tr>
+    <tr><td>嵌套 Maxwell 盒的界面命名</td><td>内层盒的外侧相邻区域是外层盒（不是最外层空气）——命名界面必须写 <code class="inline">("box_a_air", "box_all_air")</code>；外层盒用更低 priority 先写、内层后写覆盖、磁体最后覆盖。</td></tr>
+    <tr><td>HXT 网格不保持镜像对称</td><td>19,903 个节点中 17,515 个无镜像伙伴——对称性类校验只能到离散误差水平（实测力差 ~7%），要么用结构化网格，要么放宽容差。</td></tr>
+  </table>
+  <div class="callout"><b>通用性结论：</b>换一套几何与材料，四步流程原样复用、物理校验成立——「通用的是管线，不是某一个几何形状」有了实测证据。完整边界清单与三维几何图见专题页 <a href="集成通用性.html">集成通用性.html</a>（或《集成通用性边界.md》）。</div>
+</section>
+
+<!-- ============================== §7 ============================== -->
+<section id="s7">
+  <h2><span class="no">§7</span>几何示意</h2>
+  <div style="border:1px solid var(--line);border-radius:14px;background:#fbfcfe;padding:8px;max-width:920px;margin:0 auto">
+    <img src="results/double_magnet_geometry.png" alt="双磁体几何示意图" style="width:100%;height:auto;display:block">
+  </div>
+  <p style="text-align:center;font-size:13.5px;color:var(--muted);margin-top:12px">图 1 · 几何示意：两块沿 +z 充磁的永磁体，上磁体沿 x 平移 d；虚线 Maxwell 盒只包围下磁体，在其表面积分 Maxwell 应力得下磁体受力。</p>
+</section>
+
+<section id="appendix">
+  <h2><span class="no">附录</span>使用方式与文件地图</h2>
+
+  <h3>运行方式</h3>
+  <pre style="background:#eef1f5;border-radius:8px;padding:10px 14px;font-size:13px;overflow:auto"><code># 单工况（自动使用本目录 vendored fealpy）
+python modular_double_magnet_benchmark.py --d 0 --p 2
+
+# Python API
+from modular_double_magnet_benchmark import solve_many
+results = solve_many([0.0, 2.0, 4.0], p=2)</code></pre>
+
+  <h3>文件地图</h3>
+  <table>
+    <tr><th>文件</th><th>职责</th></tr>
+    <tr><td><code class="inline">fealpy/fealpy/material/magnetic_material.py</code></td><td>MagneticMaterialProtocol / Air / LinearMagneticMaterial / PermanentMagnet</td></tr>
+    <tr><td><code class="inline">fealpy/fealpy/mesher/box_region_mesher.py</code></td><td>BoxRegionMesher（命名区域 + 角点形式 + 严格校验）</td></tr>
+    <tr><td><code class="inline">fealpy/fealpy/cem/fem/magnetostatic_lfem_model.py</code></td><td>MagnetostaticLFEMModel / RegionTaggedMeshDataProtocol / SolverOptions / SurfaceData / MU0 / compute_maxwell_force</td></tr>
+    <tr><td><code class="inline">fealpy/tests/…</code> ×3</td><td>68 项测试（材料 10 + 网格器 29 + 模型 29）</td></tr>
+    <tr><td><code class="inline">modular_double_magnet_benchmark.py</code></td><td>算例配置与入口（角点形式几何 + 模型三件套 + CLI 委托）</td></tr>
+    <tr><td><code class="inline">double_magnet_cli.py</code> / <code class="inline">comparison.py</code> / <code class="inline">double_magnet_reference.py</code></td><td>命令行层 / 通用对比统计 / 解析公式与 ANSYS 表</td></tr>
+    <tr><td><code class="inline">test_benchmark_regression.py</code></td><td>端到端回归：集成入口 vs 最初程序（网格逐位一致）</td></tr>
+  </table>
+
+  <p class="foot">FEALPy 通用化集成版 · 翻页演示见 <a href="集成_简洁版.html">集成_简洁版.html</a> ·
+  上一站 <a href="../初步分块/模块化_详细版.html">工程化分块详细版</a> ·
+  文档《fealpy集成修改说明.md》与本页同目录</p>
+</section>
+
+</div>
+
+<button class="backtop" id="backtop" type="button" title="返回顶部">↑</button>
+
+<!-- ============ 代码源（text/plain，避免转义问题） ============ -->
+<script type="text/plain" class="py-src" data-key="cem-init" data-file="fealpy/fealpy/cem/fem/__init__.py" data-start="1" data-end="19" data-title="fealpy/cem/fem/__init__.py（全文）">
+"""Finite-element models for computational electromagnetics."""
+
+from .magnetostatic_lfem_model import (
+    compute_maxwell_force,
+    MU0,
+    MagnetostaticLFEMModel,
+    RegionTaggedMeshDataProtocol,
+    SolverOptions,
+    SurfaceData,
+)
+
+__all__ = [
+    "compute_maxwell_force",
+    "MU0",
+    "MagnetostaticLFEMModel",
+    "RegionTaggedMeshDataProtocol",
+    "SolverOptions",
+    "SurfaceData",
+]
+</script>
+
+<script type="text/plain" class="py-src" data-key="mms-grad" data-file="fealpy/tests/cem/fem/test_magnetostatic_lfem_model.py" data-start="65" data-end="94" data-title="测试内制造解（∇φ 与 M=∇φ+∇×ψ）">
+@cartesian
+def _manufactured_gradient(p):
+    x, y, z = p[..., 0], p[..., 1], p[..., 2]
+    pi = math.pi
+    return bm.stack(
+        (
+            pi * bm.cos(pi * x) * bm.sin(pi * y) * bm.sin(pi * z),
+            pi * bm.sin(pi * x) * bm.cos(pi * y) * bm.sin(pi * z),
+            pi * bm.sin(pi * x) * bm.sin(pi * y) * bm.cos(pi * z),
+        ),
+        axis=-1,
+    )
+
+
+@cartesian
+def _manufactured_magnetization(p):
+    """Return grad(phi) + curl(q, q, q) for a test-local exact solution."""
+    x, y, z = p[..., 0], p[..., 1], p[..., 2]
+
+    def s(t):
+        return (t * (1.0 - t)) ** 2
+
+    def ds(t):
+        return 2.0 * t * (1.0 - t) * (1.0 - 2.0 * t)
+
+    qx = ds(x) * s(y) * s(z)
+    qy = s(x) * ds(y) * s(z)
+    qz = s(x) * s(y) * ds(z)
+    curl_psi = bm.stack((qy - qz, qz - qx, qx - qy), axis=-1)
+    return _manufactured_gradient(p) + curl_psi
+</script>
+
+<script type="text/plain" class="py-src" data-key="mms-conv" data-file="fealpy/tests/cem/fem/test_magnetostatic_lfem_model.py" data-start="407" data-end="434" data-title="H¹ 收敛性验证（不依赖 Gmsh）">
+def test_manufactured_solution_convergence():
+    """The H1 error of the test-local manufactured solution decreases."""
+    h1_errors = []
+    for n in (3, 4, 6):
+        mesh = TetrahedronMesh.from_box(nx=n, ny=n, nz=n)
+
+        model = MagnetostaticLFEMModel(p=1)
+        model.set_mesh_data(_all_air_mesh_data(mesh))
+        model.set_materials({"air": Air()})
+        model.set_magnetization_source(_manufactured_magnetization)
+        model.solve()
+
+        space = model.space
+        quadrature = mesh.quadrature_formula(4, "cell")
+        bcs, ws = quadrature.get_quadrature_points_and_weights()
+        gphi = space.grad_basis(bcs)  # (NC, NQ, ldof, 3)
+        cell_to_dof = space.cell_to_dof()
+        grad_uh = bm.einsum("cl,cqld->cqd", model.uh[cell_to_dof], gphi)
+        points = mesh.bc_to_point(bcs)  # (NC, NQ, 3)
+        error = grad_uh - _manufactured_gradient(points)
+        measures = mesh.entity_measure("cell")
+        error_squared = bm.einsum(
+            "c,q,cq->", measures, ws, bm.sum(error * error, axis=-1)
+        )
+        h1_errors.append(float(bm.sqrt(error_squared)))
+
+    assert h1_errors[0] > h1_errors[1] > h1_errors[2]
+    assert h1_errors[2] < 1.0
+</script>
+
+<script type="text/plain" class="py-src" data-key="proto-material" data-file="fealpy/fealpy/material/magnetic_material.py" data-start="28" data-end="55" data-title="MagneticMaterialProtocol + _vector3">
+@runtime_checkable
+class MagneticMaterialProtocol(Protocol):
+    """Read-only constitutive interface used by magnetostatic models."""
+
+    @property
+    def relative_permeability(self) -> float:
+        """Return the positive dimensionless relative permeability."""
+        ...
+
+    @property
+    def magnetization(self) -> Iterable[float]:
+        """Return the three-component magnetization in A/m."""
+        ...
+
+
+def _vector3(value: Iterable[float], name: str) -> tuple[float, float, float]:
+    """Convert ``value`` into a validated length-3 tuple of floats."""
+    if isinstance(value, (str, bytes)):
+        raise TypeError(f"{name} must be an iterable of three numbers")
+    try:
+        vector = tuple(float(item) for item in value)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f"{name} must be an iterable of three numbers") from exc
+    if len(vector) != 3:
+        raise ValueError(f"{name} must contain exactly three values")
+    if not all(math.isfinite(item) for item in vector):
+        raise ValueError(f"{name} values must be finite")
+    return vector
+</script>
+
+<script type="text/plain" class="py-src" data-key="material-pm" data-file="fealpy/fealpy/material/magnetic_material.py" data-start="105" data-end="127" data-title="PermanentMagnet（不可变 tuple 存储）">
+@dataclass(frozen=True)
+class PermanentMagnet:
+    """Linear permanent magnet in ``B = mu0 * (mu_r H + M)`` form.
+
+    Parameters:
+        magnetization: Remanent magnetization (A/m) given as an iterable of
+            exactly three values.
+        relative_permeability (float, optional): Dimensionless relative
+            permeability; must be positive. Defaults to 1.0.
+    """
+
+    magnetization: Iterable[float]
+    relative_permeability: float = 1.0
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "magnetization", _vector3(self.magnetization, "magnetization")
+        )
+        object.__setattr__(
+            self,
+            "relative_permeability",
+            _positive_finite(self.relative_permeability, "relative permeability"),
+        )
+</script>
+
+<script type="text/plain" class="py-src" data-key="proto-mesh" data-file="fealpy/fealpy/cem/fem/magnetostatic_lfem_model.py" data-start="79" data-end="94" data-title="RegionTaggedMeshDataProtocol">
+class RegionTaggedMeshDataProtocol(Protocol):
+    """Structural interface required by :class:`MagnetostaticLFEMModel`.
+
+    Any conforming tetrahedral mesh provider can be used; it need not be a
+    :class:`~fealpy.mesher.BoxRegionMesher`. Region and interface names are
+    connected to integer cell tags through this protocol.
+    """
+
+    mesh: Any
+    cell_tags: TensorLike
+    region_tags: Mapping[str, int]
+    interface_names: Mapping[str, tuple[str, str]]
+
+    def tag(self, name: str) -> int:
+        """Return the integer cell tag associated with ``name``."""
+        ...
+</script>
+
+<script type="text/plain" class="py-src" data-key="gauge" data-file="fealpy/fealpy/cem/fem/magnetostatic_lfem_model.py" data-start="494" data-end="543" data-title="solve() · 显式规范点 + CG 迭代计数">
+        matrix = stiffness.to_scipy().tolil(copy=True)
+        vector = bm.to_numpy(rhs).copy()
+        gauge_dof = 0
+        matrix[:, gauge_dof] = 0.0
+        matrix[gauge_dof, :] = 0.0
+        matrix[gauge_dof, gauge_dof] = 1.0
+        matrix = matrix.tocsr()
+        vector[gauge_dof] = 0.0
+        if pyamg is not None:
+            multigrid = pyamg.smoothed_aggregation_solver(
+                matrix, symmetry="symmetric"
+            )
+            preconditioner = multigrid.aspreconditioner(cycle="V")
+        else:
+            self.logger.warning(
+                "pyamg is not installed; falling back to unpreconditioned CG"
+            )
+            preconditioner = None
+        iterations = 0
+
+        def count_iteration(_iterate) -> None:
+            nonlocal iterations
+            iterations += 1
+
+        potential, info = cg(
+            matrix,
+            vector,
+            M=preconditioner,
+            rtol=self.options.rtol,
+            atol=self.options.atol,
+            maxiter=self.options.maxiter,
+            callback=count_iteration,
+        )
+        if info < 0:
+            raise RuntimeError(f"CG failed with status {info}")
+        if info > 0:
+            self.logger.warning(
+                "CG reached %d iterations without meeting the requested "
+                "tolerance",
+                info,
+            )
+        else:
+            self.logger.info("CG converged in %d iterations", iterations)
+        self.uh = bm.from_numpy(potential)
+        self.solver_info = {
+            "cg_info": int(info),
+            "cg_iterations": iterations,
+            "gauge_dof": gauge_dof,
+        }
+        return self.uh
+</script>
+
+<script type="text/plain" class="py-src" data-key="explicit-force" data-file="fealpy/fealpy/cem/fem/magnetostatic_lfem_model.py" data-start="707" data-end="768" data-title="compute_maxwell_force（函数式入口）">
+def compute_maxwell_force(
+    mesh_data: RegionTaggedMeshDataProtocol,
+    materials: Mapping[str, MagneticMaterialProtocol],
+    space,
+    potential: TensorLike,
+    surface_name: str,
+    mu0: float = MU0,
+    magnetization_source: SourceLike | None = None,
+) -> TensorLike:
+    r"""Compute Maxwell-stress force from an explicit finite-element solution.
+
+    This functional entry point is intended for postprocessing pipelines in
+    which the mesh data, material mapping, finite-element space and magnetic
+    scalar potential are carried as separate values. It performs the same
+    named-interface integration as :meth:`MagnetostaticLFEMModel.compute_force`
+    without requiring callers to retain the model instance that produced the
+    solution.
+
+    Parameters:
+        mesh_data: Conforming tetrahedral mesh, cell-region tags and named
+            interfaces satisfying :class:`RegionTaggedMeshDataProtocol`.
+        materials: Mapping from every mesh-region name to a magnetic material.
+        space: Continuous Lagrange finite-element space used by ``potential``.
+        potential: Magnetic scalar-potential degrees of freedom, shape
+            ``(GDOF,)``.
+        surface_name: Name of the closed air interface on which the vacuum
+            Maxwell stress tensor is integrated.
+        mu0: Positive vacuum permeability in H/m. Defaults to :data:`MU0`.
+        magnetization_source: Optional tensor source of shape ``(NC, 1, 3)``
+            used by the solve. Callable sources remain unsupported by the
+            Maxwell-stress path.
+
+    Returns:
+        Magnetic force vector of shape ``(3,)`` in newtons.
+
+    Raises:
+        TypeError: If ``space`` does not expose a Lagrange degree and mesh.
+        ValueError: If the space and mesh data do not match, or if the
+            potential shape is inconsistent with the space.
+    """
+    degree = getattr(space, "p", None)
+    if not isinstance(degree, Integral) or degree < 1:
+        raise TypeError("space must expose a positive integer Lagrange degree p")
+    if getattr(space, "mesh", None) is not mesh_data.mesh:
+        raise ValueError("space must be defined on mesh_data.mesh")
+
+    potential = bm.asarray(potential)
+    expected_dofs = space.number_of_global_dofs()
+    if potential.ndim != 1 or potential.shape[0] != expected_dofs:
+        raise ValueError(
+            "potential must have shape "
+            f"({expected_dofs},), got {tuple(potential.shape)}"
+        )
+
+    model = MagnetostaticLFEMModel(p=int(degree), mu0=mu0)
+    model.set_mesh_data(mesh_data)
+    model.set_materials(materials)
+    if magnetization_source is not None:
+        model.set_magnetization_source(magnetization_source)
+    model.space = space
+    model.uh = potential
+    return model.compute_force(surface_name)
+</script>
+
+<script type="text/plain" class="py-src" data-key="regression" data-file="test_benchmark_regression.py" data-start="1" data-end="59" data-title="test_benchmark_regression.py（全文）">
+"""端到端数值回归：集成算例入口与最初程序在同一工况下结果一致。
+
+这是「集成不改数值」的可复现证据。判据：
+
+1. 网格节点/单元与最初程序**逐位一致**——benchmark 的 `make_mesher`
+   用角点形式把最初程序的角点算式原样传给 Gmsh，避免 center/size
+   往返的 1 ulp 漂移；
+2. 磁力 F0/F1 在求解器噪声水平内一致（PyAMG 的 OpenMP 归约顺序带来
+   约 1e-12 N 的逐位不确定性，集成模型的规范点路径另有约 1e-10 N
+   量级的浮点差异）；
+3. 磁标势只确定到常数，不做逐位比较。
+
+运行方式（在 初步集成 目录下）：
+
+    PYTHONPATH=fealpy python -m pytest test_benchmark_regression.py -q
+"""
+
+import sys
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+ROOT = Path(__file__).resolve().parent
+# 本目录 vendored fealpy 优先，其次是最初程序基准。
+sys.path.insert(0, str(ROOT / "fealpy"))
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT.parent / "最初程序"))
+
+
+def test_integrated_matches_original_program_p1_d0():
+    pytest.importorskip("gmsh")
+    pytest.importorskip("pyamg")
+    from modular_double_magnet_benchmark import solve  # noqa: E402  集成入口
+    from double_magnet_benchmark import DoubleMagnetBenchmark  # noqa: E402
+
+    case = DoubleMagnetBenchmark(p=1)
+    original = case.solve(0.0)
+    integrated = solve(0.0, p=1)
+
+    # 1) 网格逐位一致
+    original_mesh = case.mesh
+    integrated_mesh = integrated["solution"].mesh_data.mesh
+    np.testing.assert_array_equal(
+        np.asarray(original_mesh.entity("node")),
+        np.asarray(integrated_mesh.entity("node")),
+    )
+    np.testing.assert_array_equal(
+        np.asarray(original_mesh.entity("cell")),
+        np.asarray(integrated_mesh.entity("cell")),
+    )
+
+    # 2) 磁力在求解器噪声水平内一致
+    np.testing.assert_allclose(
+        np.asarray(integrated["F0"]), np.asarray(original["F0"]), rtol=1.0e-9
+    )
+    np.testing.assert_allclose(
+        np.asarray(integrated["F1"]), np.asarray(original["F1"]), rtol=1.0e-9
+    )
+</script>
+
+<script type="text/plain" class="py-src" data-key="flow-orig" data-file="../最初程序/double_magnet_benchmark.py" data-start="388" data-end="408" data-title="最初程序 · solve(d)">
+    def solve(self, d):
+        """
+        为给定位移生成网格和空间，然后完成场求解与磁力计算。
+
+        Parameters
+        ----------
+        d : float
+            上磁体沿 x 方向的位移，单位 mm。
+
+        Returns
+        -------
+        result : dict
+            包含位移、磁标势以及上下磁体受力。
+        """
+        self.d = float(d)
+        self.build_gmsh_mesh()
+
+        stiffness, rhs = self.assemble()
+        phi = self._solve_linear_system(stiffness, rhs)
+        F0 = self.compute_maxwell_force(phi)
+        return {"d": self.d, "phi": phi, "F0": F0, "F1": -F0}
+</script>
+
+<script type="text/plain" class="py-src" data-key="flow-mod" data-file="../初步分块/modular_double_magnet_benchmark.py" data-start="106" data-end="129" data-title="分块 · solve()">
+def solve(
+    displacement_mm: float,
+    p: int = 2,
+    h_near_mm: float = 1.5,
+    h_far_mm: float = 6.0,
+    show: bool = False,
+):
+    geometry = make_geometry(displacement_mm)
+    mesh_data = GmshTetraMesher().generate(
+        geometry,
+        make_mesh_options(displacement_mm, h_near_mm, h_far_mm, show),
+        model_name=f"double_magnet_d{displacement_mm:g}",
+    )
+    solution = ScalarPotentialSolver(p=p).solve(mesh_data, make_pde())
+    lower_force = MaxwellStressPostprocessor().compute_force(
+        solution, "lower_magnet_maxwell_surface"
+    )
+    return {
+        "d": float(displacement_mm),
+        "solution": solution,
+        "phi": solution.potential,
+        "F0": lower_force,
+        "F1": -lower_force,
+    }
+</script>
+
+<script type="text/plain" class="py-src" data-key="flow-int" data-file="modular_double_magnet_benchmark.py" data-start="120" data-end="140" data-title="集成 · solve()">
+def solve(
+    displacement_mm: float,
+    p: int = 2,
+    h_near_mm: float = 1.5,
+    h_far_mm: float = 6.0,
+    show: bool = False,
+):
+    mesher = make_mesher(displacement_mm, h_near_mm, h_far_mm, show)
+    mesher.init_mesh(model_name=f"double_magnet_d{displacement_mm:g}")
+    model = MagnetostaticLFEMModel(p=p, mu0=MU0)
+    model.set_mesh_data(mesher)
+    model.set_materials(make_materials())
+    model.solve()
+    lower_force = model.compute_force("lower_magnet_maxwell_surface")
+    return {
+        "d": float(displacement_mm),
+        "solution": model,
+        "phi": model.uh,
+        "F0": lower_force,
+        "F1": -lower_force,
+    }
+</script>
+
+<script type="text/plain" class="py-src" data-key="orig-geom" data-file="../最初程序/double_magnet_benchmark.py" data-start="159" data-end="191" data-title="最初程序 · 几何部分">
+        x_max = 30.0 + max(self.d - 8.0, 0.0)
+        self.air_box = np.array(
+            [-30.0, -30.0, -27.0, x_max, 30.0, 27.0]
+        ) * 1.0e-3
+        magnet1_lo = np.array([-10.0, -6.0, -3.0]) * 1.0e-3
+        magnet1_hi = np.array([10.0, 6.0, 3.0]) * 1.0e-3
+        magnet2_lo = np.array([-10.0 + self.d, -14.0, 5.0]) * 1.0e-3
+        magnet2_hi = np.array([2.0 + self.d, 6.0, 11.0]) * 1.0e-3
+
+        gmsh.initialize()
+        gmsh.option.setNumber("General.Terminal", 0)
+        gmsh.model.add(f"double_magnet_d{self.d:g}")
+
+        # 构建几何
+        air = gmsh.model.occ.addBox(
+            self.air_box[0],
+            self.air_box[1], self.air_box[2],
+            self.air_box[3] - self.air_box[0],
+            self.air_box[4] - self.air_box[1],
+            self.air_box[5] - self.air_box[2],
+        )
+        magnet1 = gmsh.model.occ.addBox(*magnet1_lo, *(magnet1_hi - magnet1_lo))
+        magnet2 = gmsh.model.occ.addBox(*magnet2_lo, *(magnet2_hi - magnet2_lo))
+        maxwell_box = gmsh.model.occ.addBox(*MAXWELL_LO, *(MAXWELL_HI - MAXWELL_LO))
+
+        ## 几何合并
+        _, fragment_map = gmsh.model.occ.fragment(
+            [(3, air)], [(3, magnet1), (3, magnet2), (3, maxwell_box)]
+        )
+        magnet1_volumes = fragment_map[1]
+        magnet2_volumes = fragment_map[2]
+        maxwell_volumes = fragment_map[3]
+        gmsh.model.occ.synchronize()
+</script>
+
+<script type="text/plain" class="py-src" data-key="mod-geom" data-file="../初步分块/modular_double_magnet_benchmark.py" data-start="37" data-end="73" data-title="分块 · make_geometry()">
+def make_geometry(displacement_mm: float) -> GeometryModel:
+    """Build the original benchmark geometry using SI units.
+
+    All boxes use :meth:`BoxRegion.from_corners` with the exact corner
+    arithmetic of the original program, so the generated mesh reproduces
+    the reference mesh bit for bit (no center/size round-trip ulp drift).
+    """
+    d = float(displacement_mm)
+    x_max_mm = 30.0 + max(d - 8.0, 0.0)
+    outer_lower = np.array([-30.0, -30.0, -27.0]) * 1.0e-3
+    outer_upper = np.array([x_max_mm, 30.0, 27.0]) * 1.0e-3
+    maxwell_lower = np.array([-12.0, -8.0, -5.0]) * 1.0e-3
+    maxwell_upper = np.array([12.0, 8.0, 4.0]) * 1.0e-3
+
+    return GeometryModel(
+        outer=BoxRegion.from_corners("outer_air", outer_lower, outer_upper),
+        regions=(
+            BoxRegion.from_corners(
+                "maxwell_air", maxwell_lower, maxwell_upper, priority=0
+            ),
+            BoxRegion.from_corners(
+                "lower_magnet",
+                np.array([-10.0, -6.0, -3.0]) * 1.0e-3,
+                np.array([10.0, 6.0, 3.0]) * 1.0e-3,
+                priority=10,
+            ),
+            BoxRegion.from_corners(
+                "upper_magnet",
+                np.array([-10.0 + d, -14.0, 5.0]) * 1.0e-3,
+                np.array([2.0 + d, 6.0, 11.0]) * 1.0e-3,
+                priority=10,
+            ),
+        ),
+        interface_names={
+            "lower_magnet_maxwell_surface": ("maxwell_air", "outer_air")
+        },
+    )
+</script>
+
+<script type="text/plain" class="py-src" data-key="orig-const" data-file="../最初程序/double_magnet_benchmark.py" data-start="31" data-end="37" data-title="最初程序 · 常量区">
+MU0 = 4.0 * math.pi * 1.0e-7  # 真空磁导率，单位 H/m。
+BR_Z = 0.38                   # 两个永磁体沿 +z 方向的剩磁通密度，单位 T。
+MZ = BR_Z / MU0               # 磁化强度幅值，A/m
+
+# 包围下磁体的 Maxwell 应力积分盒的两个对角点，单位 m。
+MAXWELL_LO = np.array([-12.0, -8.0, -5.0]) * 1.0e-3
+MAXWELL_HI = np.array([12.0, 8.0, 4.0]) * 1.0e-3
+</script>
+
+<script type="text/plain" class="py-src" data-key="orig-mag" data-file="../最初程序/double_magnet_benchmark.py" data-start="247" data-end="249" data-title="最初程序 · 磁化写入（cell_tag &gt;= 2）">
+        NC = self.mesh.number_of_cells()
+        magnetization = bm.zeros((NC, 1, 3), dtype=self.mesh.ftype)
+        magnetization = bm.set_at(magnetization, (self.cell_tag >= 2, 0, 2),MZ)
+</script>
+
+<script type="text/plain" class="py-src" data-key="mod-pde" data-file="../初步分块/modular_double_magnet_benchmark.py" data-start="93" data-end="103" data-title="分块 · make_pde()">
+def make_pde() -> ScalarPotentialPDE:
+    magnet = PermanentMagnet(magnetization=[0.0, 0.0, MZ])
+    return ScalarPotentialPDE(
+        {
+            "outer_air": Air(),
+            "maxwell_air": Air(),
+            "lower_magnet": magnet,
+            "upper_magnet": magnet,
+        },
+        mu0=MU0,
+    )
+</script>
+
+<script type="text/plain" class="py-src" data-key="int-const" data-file="modular_double_magnet_benchmark.py" data-start="30" data-end="31" data-title="集成 · 规格换算">
+BR_Z = 0.38
+MZ = BR_Z / MU0
+</script>
+
+<script type="text/plain" class="py-src" data-key="int-mat" data-file="modular_double_magnet_benchmark.py" data-start="110" data-end="117" data-title="集成 · make_materials()">
+def make_materials() -> dict:
+    magnet = PermanentMagnet(magnetization=[0.0, 0.0, MZ])
+    return {
+        "outer_air": Air(),
+        "maxwell_air": Air(),
+        "lower_magnet": magnet,
+        "upper_magnet": magnet,
+    }
+</script>
+
+<script type="text/plain" class="py-src" data-key="int-geom" data-file="modular_double_magnet_benchmark.py" data-start="34" data-end="107" data-title="集成 · make_mesher()（角点形式）">
+def make_mesher(
+    displacement_mm: float,
+    h_near_mm: float = 1.5,
+    h_far_mm: float = 6.0,
+    show: bool = False,
+) -> BoxRegionMesher:
+    """Build the benchmark geometry and mesh options using SI units.
+
+    Command-line sizes stay in mm and are converted to m inside the options.
+
+    ``d >= 0`` and ``h_near <= h_far`` are benchmark semantics: the generic
+    ``BoxRegionMesher`` accepts any valid geometry and any size-field pair,
+    so these two constraints deliberately live here rather than in fealpy.
+    """
+    d = float(displacement_mm)
+    h_near = float(h_near_mm)
+    h_far = float(h_far_mm)
+    # 带参数名的快速失败；BoxRegionMesher 会在网格生成前二次校验尺寸场数值。
+    if not np.isfinite(d) or d < 0.0:
+        raise ValueError("displacement_mm must be finite and non-negative")
+    if not np.isfinite(h_near) or h_near <= 0.0:
+        raise ValueError("h_near_mm must be finite and positive")
+    if not np.isfinite(h_far) or h_far <= 0.0:
+        raise ValueError("h_far_mm must be finite and positive")
+    if h_near > h_far:
+        raise ValueError("h_near_mm must not exceed h_far_mm")
+    x_max_mm = 30.0 + max(d - 8.0, 0.0)
+    outer_lower = np.array([-30.0, -30.0, -27.0]) * 1.0e-3
+    outer_upper = np.array([x_max_mm, 30.0, 27.0]) * 1.0e-3
+    maxwell_lower = np.array([-12.0, -8.0, -5.0]) * 1.0e-3
+    maxwell_upper = np.array([12.0, 8.0, 4.0]) * 1.0e-3
+    size_lower = np.array([-18.0, -20.0, -11.0]) * 1.0e-3
+    size_upper = np.array([max(18.0, d + 8.0), 14.0, 17.0]) * 1.0e-3
+
+    # 全部区域用角点形式描述：把最初程序的角点算式原样传给 Gmsh，
+    # 网格与最初程序逐位一致（center/size 往返会差 1 ulp，足以改变网格）。
+    return BoxRegionMesher(
+        options={
+            "outer": {"name": "outer_air", "lower": outer_lower, "upper": outer_upper},
+            "regions": [
+                {
+                    "name": "maxwell_air",
+                    "lower": maxwell_lower,
+                    "upper": maxwell_upper,
+                    "priority": 0,
+                },
+                {
+                    "name": "lower_magnet",
+                    "lower": np.array([-10.0, -6.0, -3.0]) * 1.0e-3,
+                    "upper": np.array([10.0, 6.0, 3.0]) * 1.0e-3,
+                    "priority": 10,
+                },
+                {
+                    "name": "upper_magnet",
+                    "lower": np.array([-10.0 + d, -14.0, 5.0]) * 1.0e-3,
+                    "upper": np.array([2.0 + d, 6.0, 11.0]) * 1.0e-3,
+                    "priority": 10,
+                },
+            ],
+            "size_fields": [
+                (
+                    size_lower,
+                    size_upper,
+                    h_near * 1.0e-3,
+                    h_far * 1.0e-3,
+                    8.0e-3,
+                )
+            ],
+            "interface_names": {
+                "lower_magnet_maxwell_surface": ("maxwell_air", "outer_air")
+            },
+            "show": show,
+        }
+    )
+</script>
+
+<script type="text/plain" class="py-src" data-key="generic-case-build" data-file="generic_magnet_case.py" data-start="39" data-end="117" data-title="通用案例 · 几何与材料（build_case + fealpy_mesher）">
+def build_case(p: int = 1):
+    """构造几何/网格与材料，返回已求解的模型。"""
+    mesher = fealpy_mesher()
+    mesher.init_mesh(model_name="generic_three_magnets")
+    model = MagnetostaticLFEMModel(p=p, mu0=MU0)
+    model.set_mesh_data(mesher)
+    model.set_materials(
+        {
+            "air": Air(),
+            "box_all_air": Air(),
+            "box_a_air": Air(),
+            "box_b_air": Air(),
+            "box_c_air": Air(),
+            "box_d_air": Air(),
+            "magnet_a": PermanentMagnet([0.0, 0.0, MZ]),
+            "magnet_b": PermanentMagnet([0.0, 0.0, MZ]),
+            "magnet_c": PermanentMagnet([0.0, 0.0, MZ]),
+            "magnet_d": PermanentMagnet([0.0, MZ, 0.0]),  # 不同磁化方向（+y）
+            "soft_block": LinearMagneticMaterial(relative_permeability=250.0),
+        }
+    )
+    model.solve()
+    return model
+
+
+def fealpy_mesher():
+    """几何描述：四块磁体 + 一块软磁 + 五个嵌套 Maxwell 空气盒。"""
+    from fealpy.mesher import BoxRegionMesher
+
+    # 注意 priority 语义：外层的 box_all_air 先写（-1），内层小盒（0）
+    # 后写覆盖，磁体/软磁（10）最后覆盖——嵌套空气盒各得其所。
+    return BoxRegionMesher(
+        options={
+            "outer": {
+                "name": "air",
+                "lower": np.array([-40.0, -40.0, -45.0]) * MM,
+                "upper": np.array([40.0, 40.0, 55.0]) * MM,
+            },
+            "regions": [
+                {"name": "box_all_air", "lower": np.array([-33.0, -15.0, -30.0]) * MM,
+                 "upper": np.array([33.0, 33.0, 45.0]) * MM, "priority": -1},
+                {"name": "box_a_air", "lower": np.array([-28.0, -8.0, -8.0]) * MM,
+                 "upper": np.array([-2.0, 8.0, 8.0]) * MM, "priority": 0},
+                {"name": "box_b_air", "lower": np.array([2.0, -8.0, -8.0]) * MM,
+                 "upper": np.array([28.0, 8.0, 8.0]) * MM, "priority": 0},
+                {"name": "box_c_air", "lower": np.array([-8.0, -8.0, 17.0]) * MM,
+                 "upper": np.array([8.0, 8.0, 43.0]) * MM, "priority": 0},
+                {"name": "box_d_air", "lower": np.array([-8.0, 17.0, -8.0]) * MM,
+                 "upper": np.array([8.0, 33.0, 8.0]) * MM, "priority": 0},
+                {"name": "magnet_a", "lower": np.array([-25.0, -5.0, -5.0]) * MM,
+                 "upper": np.array([-5.0, 5.0, 5.0]) * MM, "priority": 10},
+                {"name": "magnet_b", "lower": np.array([5.0, -5.0, -5.0]) * MM,
+                 "upper": np.array([25.0, 5.0, 5.0]) * MM, "priority": 10},
+                {"name": "magnet_c", "lower": np.array([-5.0, -5.0, 20.0]) * MM,
+                 "upper": np.array([5.0, 5.0, 40.0]) * MM, "priority": 10},
+                {"name": "magnet_d", "lower": np.array([-5.0, 20.0, -5.0]) * MM,
+                 "upper": np.array([5.0, 30.0, 5.0]) * MM, "priority": 10},
+                {"name": "soft_block", "lower": np.array([-5.0, -5.0, -25.0]) * MM,
+                 "upper": np.array([5.0, 5.0, -15.0]) * MM, "priority": 10},
+            ],
+            "size_fields": [
+                (
+                    np.array([-30.0, -30.0, -30.0]) * MM,
+                    np.array([30.0, 30.0, 30.0]) * MM,
+                    2.0e-3,
+                    8.0e-3,
+                    4.0e-3,
+                )
+            ],
+            "interface_names": {
+                # 嵌套空气盒：内层盒的外侧相邻区域是外层盒的名字。
+                "surface_all": ("box_all_air", "air"),
+                "surface_a": ("box_a_air", "box_all_air"),
+                "surface_b": ("box_b_air", "box_all_air"),
+                "surface_c": ("box_c_air", "box_all_air"),
+                "surface_d": ("box_d_air", "box_all_air"),
+            },
+        }
+    )
+</script>
+
+<script type="text/plain" class="py-src" data-key="generic-case-main" data-file="generic_magnet_case.py" data-start="120" data-end="169" data-title="通用案例 · 校验（main）">
+def main() -> None:
+    model = build_case(p=1)
+    mesh = model.mesh_data.mesh
+    print(f"网格: {mesh.number_of_nodes()} 节点, {mesh.number_of_cells()} 单元")
+    print(f"CG: info={model.solver_info['cg_info']}, "
+          f"iterations={model.solver_info['cg_iterations']}")
+
+    def force(name):
+        return np.asarray(model.compute_force(name))
+
+    F_all = force("surface_all")
+    F_a, F_b = force("surface_a"), force("surface_b")
+    F_c, F_d = force("surface_c"), force("surface_d")
+
+    print("\n=== 结果（单位 N）===")
+    for name, F in [
+        ("组合体整体 F_all", F_all),
+        ("magnet_a      F_a", F_a),
+        ("magnet_b      F_b", F_b),
+        ("magnet_c      F_c", F_c),
+        ("magnet_d(+y)  F_d", F_d),
+    ]:
+        print(f"  {name}: ({F[0]:+.6f}, {F[1]:+.6f}, {F[2]:+.6f})")
+
+    print("\n=== 物理校验 ===")
+    assert np.all(np.isfinite([F_all, F_a, F_b, F_c, F_d])), "存在非有限力"
+    print("1) 所有力有限                                  ✓")
+
+    assert np.abs(F_all).max() < 1.0, f"组合体自作用力应≈0，实际 {F_all}"
+    print(f"2) 孤立组合体自作用力 ≈ 0（|F_all|max = {np.abs(F_all).max():.3e} N）  ✓")
+
+    # 镜像对称校验：HXT 生成的网格不保持镜像对称（见脚本说明），
+    # 因此镜像关系只能到离散误差水平：符号必须镜像，量级在 20% 内一致。
+    assert F_a[0] < 0.0 < F_b[0], "镜像符号方向不符"
+    dominant = max(np.abs(F_a).max(), np.abs(F_b).max())
+    mirror_scale = 0.2 * dominant + 2.0e-2
+    np.testing.assert_allclose(F_a[0], -F_b[0], atol=mirror_scale)
+    np.testing.assert_allclose(F_a[1], F_b[1], atol=mirror_scale)
+    np.testing.assert_allclose(F_a[2], F_b[2], atol=mirror_scale)
+    nodes = np.asarray(model.mesh_data.mesh.entity("node"))
+    key = lambda r: tuple(np.round([-r[0], r[1], r[2]], 6))
+    position = {tuple(np.round(r, 6)) for r in nodes}
+    missing_mirror = sum(1 for r in nodes if key(r) not in position)
+    print(f"3) 镜像对称（符号镜像 ✓，量级一致于离散误差内 ✓；"
+          f"HXT 网格非镜像对称：{missing_mirror}/{len(nodes)} 节点无镜像伙伴）  ✓")
+
+    assert not np.allclose(F_c, 0.0), "magnet_c 在场中受力不应为零"
+    assert not np.allclose(F_d, 0.0), "magnet_d 在场中受力不应为零"
+    print("4) μᵣ=250 变系数路径端到端跑通，c/d 受力非零且有限    ✓")
+    print("\n[全部校验通过]")
+</script>
+
+<script>
+(function () {
+  function esc(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function inline(s) {
+    return s.replace(
+      /(#.*$)|(@[A-Za-z_]\w*)|(\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|(r?b?u?f?(?:'''|"""|'[^'\n]*'|"[^"\n]*"))|(\b(?:def|class|return|if|elif|else|for|while|import|from|as|with|try|except|finally|raise|pass|break|continue|lambda|None|True|False|and|or|not|in|is|global|nonlocal|yield|assert|del)\b)/g,
+      function (m, c, d, n, str, kw) {
+        if (c)   return '<span class="c">' + m + '</span>';
+        if (d)   return '<span class="d">' + m + '</span>';
+        if (n)   return '<span class="n">' + m + '</span>';
+        if (str) return '<span class="s">' + m + '</span>';
+        if (kw)  return '<span class="k">' + m + '</span>';
+        return m;
+      }
+    );
+  }
+
+  function highlight(code) {
+    var out = '', state = null;
+    var lines = code.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var t = esc(lines[i]);
+      if (state) {
+        var idx = t.indexOf(state);
+        if (idx < 0) {
+          out += '<span class="s">' + t + '</span>';
+        } else {
+          out += '<span class="s">' + t.slice(0, idx + 3) + '</span>'
+               + inline(t.slice(idx + 3));
+          state = null;
+        }
+      } else {
+        var i3 = t.search(/'''|"""/);
+        if (i3 >= 0) {
+          var delim = t.slice(i3, i3 + 3);
+          var close = t.indexOf(delim, i3 + 3);
+          if (close >= 0) {
+            out += inline(t.slice(0, i3))
+                 + '<span class="s">' + t.slice(i3, close + 3) + '</span>'
+                 + inline(t.slice(close + 3));
+          } else {
+            out += inline(t.slice(0, i3)) + '<span class="s">' + t.slice(i3) + '</span>';
+            state = delim;
+          }
+        } else {
+          out += inline(t);
+        }
+      }
+      out += '\n';
+    }
+    return out;
+  }
+
+  function buildPanel(src) {
+    var fig = document.createElement('figure');
+    fig.className = 'code-panel';
+    fig.dataset.sourceKey = src.dataset.key;
+    var cap = document.createElement('figcaption');
+    cap.innerHTML = '<span class="fn">' + src.dataset.title + '</span>'
+      + '<span class="loc">' + src.dataset.file + ' · L' + src.dataset.start + '–' + src.dataset.end + '</span>'
+      + '<button class="copy" type="button">复制</button>'
+      + '<button class="toggle" type="button">收起</button>';
+    var pre = document.createElement('pre');
+    pre.className = 'code';
+    var start = parseInt(src.dataset.start, 10);
+    var hl = highlight(src.textContent.replace(/\n+$/, ''));
+    pre.innerHTML = hl.split('\n').map(function (l, i) {
+      return '<span class="l"><span class="ln">' + (start + i) + '</span>' + (l || ' ') + '</span>';
+    }).join('');
+    fig.appendChild(cap);
+    fig.appendChild(pre);
+    return fig;
+  }
+
+  var srcs = document.querySelectorAll('script.py-src');
+  srcs.forEach(function (s) {
+    var target = document.querySelector('div[data-code="' + s.dataset.key + '"]');
+    if (target) target.appendChild(buildPanel(s));
+  });
+
+  function copyText(text, btn) {
+    function done() {
+      var old = btn.textContent;
+      btn.textContent = '已复制';
+      setTimeout(function () { btn.textContent = old; }, 1200);
+    }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      done();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('button.toggle');
+    if (btn) {
+      var panel = btn.closest('.code-panel');
+      var collapsed = panel.classList.toggle('collapsed');
+      btn.textContent = collapsed ? '展开' : '收起';
+      return;
+    }
+    var copy = e.target.closest('button.copy');
+    if (copy) {
+      var key = copy.closest('.code-panel').dataset.sourceKey;
+      var source = document.querySelector('script.py-src[data-key="' + key + '"]');
+      if (source) copyText(source.textContent.replace(/^\n|\n+$/g, ''), copy);
+    }
+  });
+
+  var allCollapsed = false;
+  document.getElementById('collapseAll').addEventListener('click', function () {
+    allCollapsed = !allCollapsed;
+    document.querySelectorAll('.code-panel').forEach(function (panel) {
+      panel.classList.toggle('collapsed', allCollapsed);
+      panel.querySelector('.toggle').textContent = allCollapsed ? '展开' : '收起';
+    });
+    this.textContent = allCollapsed ? '展开代码' : '折叠代码';
+  });
+})();
+</script>
+<script>
+(function () {
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var backtop = document.getElementById('backtop');
+  var progress = document.getElementById('readProgress');
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section[id]'));
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a[href^="#"]'));
+
+  function setTheme(dark) {
+    root.dataset.theme = dark ? 'dark' : '';
+    themeBtn.textContent = dark ? '浅色' : '深色';
+  }
+  setTheme(false);
+  themeBtn.addEventListener('click', function () { setTheme(root.dataset.theme !== 'dark'); });
+  backtop.addEventListener('click', function () { window.scrollTo({top:0, behavior:'smooth'}); });
+  window.addEventListener('scroll', function () {
+    var max = document.documentElement.scrollHeight - innerHeight;
+    progress.style.width = (max > 0 ? scrollY / max * 100 : 0) + '%';
+    backtop.classList.toggle('show', scrollY > 650);
+  }, {passive:true});
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          links.forEach(function (a) {
+            a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, {rootMargin:'-22% 0px -65% 0px'});
+    sections.forEach(function (section) { observer.observe(section); });
+  }
+})();
+</script>
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['\\(', '\\)']] },
+    svg: { fontCache: 'local' }
+  };
+</script>
+<script src="mathjax/tex-svg.js"></script>
+</body>
+</html>

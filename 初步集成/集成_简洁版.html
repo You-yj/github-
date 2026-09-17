@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FEALPy 通用化集成（翻页演示）</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --panel:#ffffff; --ink:#212734; --muted:#5c6575;
+    --accent:#2563eb; --line:#e3e6eb; --chip:#eaf0ff; --chip-ink:#2f46a3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"SimSun","宋体","Songti SC","Noto Serif CJK SC","Source Han Serif SC","AR PL UMing CN","AR PL UMing HK","AR PL UMing TW",serif;
+    line-height:1.8;padding-bottom:66px;}
+  .deck{margin:0;padding:10px 18px 0;}
+  .page{display:none;}
+  .page.active{display:flex;align-items:center;justify-content:center;
+    min-height:calc(100vh - 92px);animation:pageIn .35s ease;}
+  .page > header.top, .page > section{width:100%;max-width:960px;
+    max-height:calc(100vh - 112px);overflow-y:auto;}
+  @keyframes pageIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  header.top{text-align:center;padding:24px 10px;}
+  header.top h1{margin:0 0 10px;font-size:30px;}
+  header.top p{margin:6px 0 0;color:var(--muted);font-size:16px;}
+  header.top .hint{margin-top:22px;color:var(--accent);font-size:15px;}
+  section{background:transparent;border:none;border-radius:0;box-shadow:none;
+    padding:0 8px 10px;overflow:visible;}
+  h2{font-size:25px;font-weight:700;text-align:center;color:#111827;
+    margin:8px 0 20px;padding:0;}
+  h2 .no{color:var(--accent);margin-right:8px;}
+  h2::after{content:"";display:block;width:64px;height:3px;margin:10px auto 0;
+    background:var(--accent);border-radius:2px;}
+  p,li{font-size:15.5px;}
+  ul,ol{margin:8px 0;padding-left:22px;}
+  li{margin:5px 0;}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;margin:10px 0;}
+  th,td{border:1px solid var(--line);padding:6px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f4f8;font-weight:600;white-space:nowrap;}
+  td.num,th.num{text-align:center;}
+  .callout{border-left:3px solid var(--accent);background:#f0f6ff;padding:9px 14px;
+    border-radius:0 8px 8px 0;margin:10px 0;font-size:15px;}
+  .mathbox{background:#f7f9fc;border:1px dashed var(--line);border-radius:10px;
+    padding:16px 20px;margin:12px 0;text-align:center;}
+  .math{font-family:"STIX Two Math","Cambria Math","Times New Roman",Georgia,serif;
+    font-size:18px;margin:7px 0;}
+  .math.small{font-size:14.5px;color:var(--muted);}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0 4px;justify-content:center;}
+  .chip{background:var(--chip);color:var(--chip-ink);border-radius:999px;
+    padding:3px 12px;font-size:13.5px;white-space:nowrap;}
+  .flow .arrow{color:#9aa3b0;}
+  pre.cmd{background:#eef1f5;border-radius:8px;padding:10px 14px;font-size:13.5px;overflow:auto;}
+  .foot{color:var(--muted);font-size:14px;margin-top:14px;}
+  .foot a{color:var(--accent);}
+  nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:10;
+    background:rgba(255,255,255,.94);border-top:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    padding:10px 16px;backdrop-filter:blur(4px);}
+  nav.bottom button.navbtn{border:1px solid var(--line);background:var(--panel);
+    color:var(--ink);border-radius:8px;cursor:pointer;font-size:14px;
+    padding:4px 14px;font-family:inherit;}
+  nav.bottom button.navbtn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+  nav.bottom button.navbtn:disabled{opacity:.4;cursor:default;}
+  .dots{display:flex;align-items:center;gap:7px;}
+  .dot{border:none;width:10px;height:10px;border-radius:50%;
+    background:#c3cad4;cursor:pointer;padding:0;transition:all .2s;}
+  .dot.on{background:var(--accent);transform:scale(1.25);}
+  .pageno{font-size:13px;color:var(--muted);min-width:44px;text-align:center;}
+  /* 2026 汇报版视觉系统 */
+  :root{
+    --bg:#eef3f7;--panel:#ffffff;--ink:#102235;--muted:#5e6d7c;
+    --accent:#0f766e;--accent-2:#ea6a47;--line:#d8e2e8;
+    --chip:#dff4f0;--chip-ink:#0c645e;--shadow:0 22px 65px rgba(25,50,70,.12);
+  }
+  html{scroll-behavior:smooth}
+  body{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;
+    background:
+      radial-gradient(circle at 8% 8%,rgba(15,118,110,.10),transparent 28%),
+      radial-gradient(circle at 92% 88%,rgba(234,106,71,.10),transparent 26%),var(--bg);
+    line-height:1.65;overflow-x:hidden;}
+  .progress-track{position:fixed;inset:0 0 auto;z-index:30;height:4px;background:rgba(16,34,53,.08)}
+  .progress-track span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .35s ease}
+  .deck{max-width:1820px;margin:0 auto;padding:18px 34px 0}
+  .page.active{min-height:calc(100vh - 98px)}
+  .page > header.top,.page > section{max-width:1740px;max-height:calc(100vh - 128px);
+    scrollbar-width:thin;scrollbar-color:#a7bbb9 transparent}
+  .page > section{background:rgba(255,255,255,.92);border:1px solid rgba(216,226,232,.9);
+    border-radius:24px;box-shadow:var(--shadow);padding:28px 36px 30px;position:relative}
+  .page > section::before{content:attr(data-kicker);display:block;color:var(--accent);font-size:12px;
+    font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px;text-align:center}
+  header.top{background:linear-gradient(145deg,#0e2638,#133f4c);border-radius:28px;
+    padding:58px 64px;color:#fff;box-shadow:var(--shadow);text-align:left;position:relative;overflow:hidden}
+  header.top::after{content:"";position:absolute;width:340px;height:340px;border-radius:50%;
+    right:-110px;top:-155px;border:1px solid rgba(255,255,255,.16);box-shadow:0 0 0 48px rgba(255,255,255,.035),0 0 0 96px rgba(255,255,255,.025)}
+  header.top h1{font-size:clamp(34px,5vw,58px);line-height:1.12;letter-spacing:-.04em;max-width:780px;color:#fff;position:relative;z-index:1}
+  header.top p{font-size:17px;max-width:840px;color:#cfe0e6;position:relative;z-index:1}
+  header.top b{color:#fff}
+  header.top a{color:#9fe7dc;text-underline-offset:3px}
+  header.top .hint{color:#98e4d8;margin-top:24px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.12em;
+    color:#9fe7dc;text-transform:uppercase;margin-bottom:18px;position:relative;z-index:1}
+  .eyebrow::before{content:"";width:28px;height:2px;background:var(--accent-2)}
+  .hero-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:28px 0 0;position:relative;z-index:1}
+  .hero-metrics span{padding:12px 14px;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.06);font-size:12px;color:#cfe0e6}
+  .hero-metrics b{display:block;font-size:20px;color:#fff;margin-bottom:2px}
+  h2{font-size:clamp(25px,3vw,34px);color:var(--ink);letter-spacing:-.02em;margin-top:2px}
+  h2::after{background:linear-gradient(90deg,var(--accent),var(--accent-2));height:4px}
+  p,li{font-size:15px}
+  th{background:#eaf3f3;color:#163f42}
+  th,td{border-color:var(--line);padding:8px 12px}
+  .callout{border:none;border-left:4px solid var(--accent);background:#eaf7f5;border-radius:10px;padding:12px 16px}
+  .mathbox{background:#f6fafb;border:1px solid var(--line)}
+  .chip{background:var(--chip);color:var(--chip-ink);border:1px solid #c8e9e3;font-weight:650;padding:5px 12px}
+  .flow{justify-content:center;gap:8px}
+  .roadmap{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+  .stage-card{border:1px solid var(--line);border-radius:18px;padding:22px;background:#f8fbfc;position:relative}
+  .stage-card.active{background:linear-gradient(150deg,#e2f6f2,#fff);border-color:#8bcfc4;box-shadow:0 12px 30px rgba(15,118,110,.12)}
+  .stage-card .step{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.1em}
+  .stage-card h3{margin:7px 0 8px;font-size:19px}
+  .stage-card p{margin:0;color:var(--muted);font-size:13.5px}
+  .stage-card.active::after{content:"当前";position:absolute;right:14px;top:14px;background:var(--accent);color:#fff;border-radius:999px;padding:2px 9px;font-size:11px}
+  .takeaways{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+  .takeaway{border-top:3px solid var(--accent);background:#f7fafb;border-radius:10px;padding:13px}
+  .takeaway b{display:block;color:var(--ink);margin-bottom:4px}.takeaway span{font-size:13px;color:var(--muted)}
+  .sidebyside{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin:14px 0}
+  @media(max-width:900px){.sidebyside{grid-template-columns:minmax(0,1fr)}}
+  .sidebyside3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:14px;margin:14px 0}
+  @media(max-width:1100px){.sidebyside3{grid-template-columns:minmax(0,1fr)}}
+  .sidebyside .panel,.sidebyside3 .panel{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#15232d;box-shadow:0 9px 24px rgba(8,20,30,.13)}
+  .sidebyside .cap,.sidebyside3 .cap{padding:7px 14px;background:#101c24;color:#65d2c4;font-size:13px;font-family:ui-monospace,Consolas,monospace;display:flex;justify-content:space-between;align-items:center}
+  .sidebyside .cap small,.sidebyside3 .cap small{color:#7f8a90;font-size:11.5px}
+  .sidebyside pre,.sidebyside3 pre{margin:0;padding:10px 16px;font-size:12.8px;line-height:1.58;color:#c3d1d7;
+    font-family:ui-monospace,"SF Mono",Consolas,monospace;overflow:auto;max-height:420px;white-space:pre}
+  .figrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  @media(max-width:900px){.figrow{grid-template-columns:1fr}}
+  figure.fig{margin:0;border:1px solid var(--line);border-radius:15px;overflow:hidden;background:#fff}
+  figure.fig img{display:block;width:100%;height:auto;transition:transform .28s ease}
+  figure.fig:hover img{transform:scale(1.018)}
+  figure.fig figcaption{padding:9px 12px;font-size:13px;color:var(--muted);line-height:1.6}
+  figure.fig figcaption b{color:var(--ink)}
+  nav.bottom{background:rgba(247,250,251,.92);border-color:var(--line);padding:9px 18px;backdrop-filter:blur(14px)}
+  nav.bottom button.navbtn,.toolbtn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;cursor:pointer;padding:6px 15px;font-family:inherit}
+  nav.bottom button.navbtn:hover:not(:disabled),.toolbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .dot{width:8px;height:8px;background:#b9c6cc}.dot.on{background:var(--accent);width:24px;border-radius:8px;transform:none}
+  .slide-title{font-size:12px;color:var(--muted);min-width:88px;text-align:right}
+  @media(max-width:760px){
+    .deck{padding:10px 10px 0}.page > section{padding:22px 18px;border-radius:18px}
+    header.top{padding:38px 26px}.hero-metrics{grid-template-columns:1fr 1fr}
+    .roadmap,.takeaways{grid-template-columns:1fr}
+    .slide-title,#fullscreen{display:none}.dots{gap:5px}
+    nav.bottom{gap:8px}.page > header.top,.page > section{max-height:calc(100vh - 105px)}
+  }
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="progress-track" aria-hidden="true"><span id="progressbar"></span></div>
+<div class="deck">
+
+  <!-- 第 1 页：标题 -->
+  <div class="page active" data-title="开场">
+    <header class="top">
+      <div class="eyebrow">FEALPy integration study · stage 03</div>
+      <h1>FEALPy 通用化集成</h1>
+      <p>把分块后的通用静磁组件沉淀为 FEALPy 公共接口：材料进 <b>material</b>、网格进 <b>mesher</b>、
+      模型进 <b>cem/fem</b>——<b>数值与最初程序逐位一致</b>，两个待议议题均有明确落地。</p>
+      <p>详细讲解（含关键代码对照）见 <a href="集成_详细版.html" target="_blank">详细版</a> ·
+      上一站 <a href="../初步分块/模块化_简洁版.html" target="_blank">工程化分块</a></p>
+      <div class="hero-metrics">
+        <span><b>3</b>新增公共模块</span><span><b>68</b>项 fealpy 测试</span>
+        <span><b>逐位</b>三站数值一致</span><span><b>2</b>项议题落地</span>
+      </div>
+      <p class="hint">👆 点击页面任意处进入下一页（也可用 ← / → 方向键，或底部按钮）</p>
+    </header>
+  </div>
+
+  <!-- 第 2 页：路线 -->
+  <div class="page" data-title="三阶段路线">
+    <section data-kicker="Project route">
+      <h2><span class="no">01</span>本阶段在三阶段路线中的位置</h2>
+      <p style="text-align:center;color:var(--muted);max-width:760px;margin:0 auto 18px">数值可信、职责拆清之后，回答第三个问题：这套能力是否值得进入 FEALPy 公共接口，以及该进哪一层。</p>
+      <div class="roadmap">
+        <article class="stage-card"><span class="step">STAGE 01</span><h3>独立算例基线</h3><p>单文件闭环计算，以解析解与 ANSYS 建立可复现的数值基准。</p></article>
+        <article class="stage-card"><span class="step">STAGE 02</span><h3>算例工程化分块</h3><p>按 geometry / mesh / solver / postprocess 拆分，结果保持不变。</p></article>
+        <article class="stage-card active"><span class="step">STAGE 03</span><h3>FEALPy 通用化集成</h3><p>提炼公共接口、补齐测试，让算例成为通用能力的使用者。</p></article>
+      </div>
+      <div class="callout" style="margin-top:18px"><b>本阶段结论：</b>通用组件进入 fealpy 后，同一工况的网格与最初程序<b>逐位一致</b>、磁力在求解器噪声水平内一致——三站数值链条在本机贯通。</div>
+    </section>
+  </div>
+
+  <!-- 第 3 页：集成了什么 -->
+  <div class="page" data-title="集成了什么">
+    <section data-kicker="What is integrated">
+      <h2><span class="no">02</span>集成了什么</h2>
+      <table>
+        <tr><th>分块组件</th><th>fealpy 落点</th><th>说明</th></tr>
+        <tr><td>materials.Air / PermanentMagnet</td><td><code>fealpy.material</code></td><td>新增 Air / LinearMagneticMaterial / PermanentMagnet + MagneticMaterialProtocol</td></tr>
+        <tr><td>geometry + mesh</td><td><code>fealpy.mesher.BoxRegionMesher</code></td><td>单类网格器：命名区域 + 角点形式 + 严格校验；逐单元标签存为网格 "region" attribute</td></tr>
+        <tr><td>pde + solver + postprocess</td><td><code>fealpy.cem.fem.MagnetostaticLFEMModel</code></td><td>有状态 ComputationalModel + 显式规范点 + 函数式力入口</td></tr>
+        <tr><td>制造解 exp0014</td><td>退回测试本地</td><td>不注册 poisson DATA_TABLE（议题一的落地）</td></tr>
+        <tr><td>测试</td><td><code>tests/{material,mesher,cem/fem}</code></td><td>68 项：材料 10 + 网格器 29 + 模型 29</td></tr>
+      </table>
+      <div class="callout"><b>不集成：</b>双磁体 benchmark 专属内容（几何尺寸、AY 公式、ANSYS 表、CLI、对比绘图）留在算例目录，作为 fealpy 公共能力的下游用户。</div>
+    </section>
+  </div>
+
+  <!-- 第 4 页：议题一 -->
+  <div class="page" data-title="议题一落地">
+    <section data-kicker="Decision 01 · engineering style">
+      <h2><span class="no">03</span>议题一落地：工程型定位</h2>
+      <p style="text-align:center;color:var(--muted)">待确认的问题：制造解要不要注册为 <code>fealpy.model.poisson</code> 的 exp？答案是——<b>不注册，退回测试本地</b>。</p>
+      <div class="takeaways">
+        <div class="takeaway"><b>主输入不兼容</b><span>制造解的主输入是向量磁化场 M，边界条件是 B·n=0，通用 PoissonLFEMModel 的标量 source 与 Dirichlet 接口消费不了。</span></div>
+        <div class="takeaway"><b>避免名义可发现</b><span>放进 DATA_TABLE 会形成「名义可发现、实际不可互换」的公共算例——看起来是标准 exp，实际换不到别的模型上。</span></div>
+        <div class="takeaway"><b>并非每个模型都要 exp</b><span>FEALPy 中并非每个领域模型都必须配一个 Exp；制造解留在模型测试内，继续承担收敛性验证职责。</span></div>
+      </div>
+      <div class="callout"><b>保留的验证能力：</b>Ω=(0,1)³ 真解 φ=sin(πx)sin(πy)sin(πz)，M=∇φ+∇×ψ（ψ 紧支撑 → B·n=0 精确成立），H¹ 误差随网格加密单调下降；网格用确定性的 TetrahedronMesh.from_box()，不依赖 Gmsh。</div>
+    </section>
+  </div>
+
+  <!-- 第 5 页：议题二 -->
+  <div class="page" data-title="议题二落地">
+    <section data-kicker="Decision 02 · cem/fem">
+      <h2><span class="no">04</span>议题二落地：归口 cem/fem</h2>
+      <div class="takeaways">
+        <div class="takeaway"><b>领域接口</b><span>公共接口含 μ₀、μᵣ、M/H/B、永磁体与 Maxwell 应力——属于计算电磁学领域模型，复用 fealpy.fem 的通用形式与积分器。</span></div>
+        <div class="takeaway"><b>依赖方向单向</b><span>fealpy.cem.fem → fealpy.fem，通用 FEM 层不反向导入 CEM，无循环依赖。</span></div>
+        <div class="takeaway"><b>与仓库先例对齐</b><span>与 fealpy/csm/fem/ 的领域包组织一致，且 fealpy/cem/fem/ 子包早已预留——我们是它的第一个住户。</span></div>
+      </div>
+      <div class="callout"><b>落地形态：</b>模型从 <code>fealpy.cem.fem</code> 顶层导出 MagnetostaticLFEMModel / MU0 / SolverOptions / SurfaceData / RegionTaggedMeshDataProtocol / compute_maxwell_force。</div>
+    </section>
+  </div>
+
+  <!-- 第 6 页：协议化接口 -->
+  <div class="page" data-title="协议化接口">
+    <section data-kicker="Protocols & robustness">
+      <h2><span class="no">05</span>协议化接口与求解加固</h2>
+      <div class="takeaways">
+        <div class="takeaway"><b>材料协议</b><span>MagneticMaterialProtocol（μᵣ、M 两个只读属性）——任何满足协议的对象都能当材料，不只三个内置类。</span></div>
+        <div class="takeaway"><b>网格数据协议</b><span>RegionTaggedMeshDataProtocol（mesh/cell_tags/region_tags/interface_names/tag）——模型不再绑定 BoxRegionMesher，圆柱、STEP、外部导入网格都能接入。</span></div>
+        <div class="takeaway"><b>显式规范点</b><span>纯 Neumann 常数核在 SciPy 副本上固定第 0 个自由度消除——只改变磁标势常数，不改变 H、B 与力（实测与奇异 CG 路径差异 ≤1.3e-10 N）。</span></div>
+      </div>
+      <div class="takeaways">
+        <div class="takeaway"><b>函数式力入口</b><span>compute_maxwell_force(mesh_data, materials, space, potential, surface)——流水线不必持有模型实例也能算力。</span></div>
+        <div class="takeaway"><b>物理条件检查</b><span>Maxwell 面两侧必须是 μᵣ=1、M=0——否则直接报错，杜绝在材料界面误用真空应力公式。</span></div>
+        <div class="takeaway"><b>严格输入校验</b><span>标签唯一性、材料协议、有限值、形状一致性全部在 set_* 时拦截，错误在求解前暴露。</span></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 第 7 页：网格与材料配置对比 -->
+  <div class="page" data-title="网格与材料对比">
+    <section data-kicker="Evolution · mesh & materials">
+      <h2><span class="no">06</span>三版配置对比：网格与材料</h2>
+      <div class="sidebyside3">
+        <div class="panel">
+          <div class="cap"><span>① 最初程序 · 几何</span><small>L159–191</small></div>
+          <pre>x_max = 30.0 + max(d - 8.0, 0.0)
+air_box = [-30,-30,-27,x_max,30,27]*1e-3
+magnet1_lo / magnet1_hi
+magnet2_lo / magnet2_hi
+→ gmsh.occ.addBox × 4
+→ fragment 共形合并
+→ 体积 → 单元标签 0/1/2/3</pre>
+        </div>
+        <div class="panel">
+          <div class="cap"><span>② 工程化分块 · 几何</span><small>L37–73</small></div>
+          <pre>outer_air / maxwell_air /
+lower_magnet / upper_magnet
+= BoxRegion.from_corners(
+    name, lower, upper, priority)
+→ GeometryModel(
+    outer=..., regions=(...),
+    interface_names={"..._surface":
+        ("maxwell_air","outer_air")})
+→ GmshTetraMesher().generate()</pre>
+        </div>
+        <div class="panel">
+          <div class="cap"><span>③ FEALPy 集成 · 几何</span><small>L34–107</small></div>
+          <pre>options = {
+  "outer": {"name": "outer_air",
+            "lower": ..., "upper": ...},
+  "regions": [
+    {"name": "maxwell_air", "lower": ...,
+     "upper": ..., "priority": 0},
+    {"name": "lower_magnet", ...},
+    {"name": "upper_magnet", ...}],
+  "size_fields": [(lower, upper,
+     h_near, h_far, thickness)],
+  "interface_names": {...},
+}
+→ BoxRegionMesher(options).init_mesh()</pre>
+        </div>
+      </div>
+      <div class="sidebyside3">
+        <div class="panel">
+          <div class="cap"><span>① 最初程序 · 材料</span><small>L31–37、L247–249</small></div>
+          <pre>MU0 = 4πe-7
+BR_Z = 0.38            # 工程规格
+MZ = BR_Z / MU0
+# 无材料对象：assemble 里
+# cell_tag >= 2 的单元写 M_z</pre>
+        </div>
+        <div class="panel">
+          <div class="cap"><span>② 工程化分块 · 材料</span><small>L93–103</small></div>
+          <pre>magnet = PermanentMagnet([0, 0, MZ])
+pde = ScalarPotentialPDE({
+    "outer_air": Air(),
+    "maxwell_air": Air(),
+    "lower_magnet": magnet,
+    "upper_magnet": magnet,
+}, mu0=MU0)</pre>
+        </div>
+        <div class="panel">
+          <div class="cap"><span>③ FEALPy 集成 · 材料</span><small>L30–31、L110–117</small></div>
+          <pre>BR_Z = 0.38        # 算例规格
+MZ = BR_Z / MU0    # 规格 → 本构
+
+make_materials() → {
+  "outer_air": Air(),
+  "lower_magnet":
+    PermanentMagnet([0, 0, MZ]),
+  ...
+}</pre>
+        </div>
+      </div>
+      <div class="callout"><b>BR_Z / MZ 为什么在算例层：</b>Br = 0.38 T 是 ANSYS benchmark 的工程规格，fealpy 的 PermanentMagnet 只接受磁化强度 M（A/m）——「规格 → 本构」的换算属于算例配置，材料类不认识 Br 这个概念（三版一致）。</div>
+    </section>
+  </div>
+
+  <!-- 第 8 页：求解流水线对比 -->
+  <div class="page" data-title="求解流水线对比">
+    <section data-kicker="Evolution · solve pipeline">
+      <h2><span class="no">07</span>三版实现对比：求解流水线</h2>
+      <p style="text-align:center;color:var(--muted)">结构持续演进，数值逻辑逐句对应——最初程序全在一个类方法里，分块拆成独立模块，集成换成 fealpy 公共接口。</p>
+      <div class="sidebyside3">
+        <div class="panel">
+          <div class="cap"><span>① 最初程序 · solve(d)</span><small>L388–408</small></div>
+          <pre>self.d = float(d)
+self.build_gmsh_mesh()      # 几何+网格+空间+Maxwell 面
+
+stiffness, rhs = self.assemble()
+phi = self._solve_linear_system(stiffness, rhs)
+F0 = self.compute_maxwell_force(phi)
+return {"d": self.d, "phi": phi,
+        "F0": F0, "F1": -F0}</pre>
+        </div>
+        <div class="panel">
+          <div class="cap"><span>② 工程化分块 · solve()</span><small>L106–129</small></div>
+          <pre>geometry = make_geometry(displacement_mm)
+mesh_data = GmshTetraMesher().generate(
+    geometry, make_mesh_options(...))
+solution = ScalarPotentialSolver(p=p).solve(
+    mesh_data, make_pde())
+lower_force = \
+    MaxwellStressPostprocessor().compute_force(
+        solution,
+        "lower_magnet_maxwell_surface")
+return {"d": ..., "solution": solution,
+        "phi": solution.potential,
+        "F0": lower_force, "F1": -lower_force}</pre>
+        </div>
+        <div class="panel">
+          <div class="cap"><span>③ FEALPy 集成 · solve()</span><small>L120–140</small></div>
+          <pre>mesher = make_mesher(displacement_mm,
+                     h_near_mm, h_far_mm, show)
+mesher.init_mesh(model_name=f"double_magnet_d{...}")
+model = MagnetostaticLFEMModel(p=p, mu0=MU0)
+model.set_mesh_data(mesher)
+model.set_materials(make_materials())
+model.solve()
+lower_force = model.compute_force(
+    "lower_magnet_maxwell_surface")
+return {"d": ..., "solution": model,
+        "phi": model.uh,
+        "F0": lower_force, "F1": -lower_force}</pre>
+        </div>
+      </div>
+      <div class="callout"><b>三版共用同一套数值逻辑：</b>组装、PyAMG-CG 与应力积分逐句对应；几何经角点形式逐位一致 → 三版网格逐位相同、磁力在求解器噪声水平内一致（下一页）。</div>
+    </section>
+  </div>
+
+  <!-- 第 9 页：数值一致性 -->
+  <div class="page" data-title="数值一致性">
+    <section data-kicker="Numerical consistency">
+      <h2><span class="no">08</span>三站数值链条</h2>
+      <table>
+        <tr><th>阶段</th><th>入口</th><th>F0（p=1, d=0，N）</th><th>网格</th></tr>
+        <tr><td>① 最初程序</td><td>double_magnet_benchmark.py</td><td>(-0.56731597, -0.57342061, 1.66752555)</td><td>基准</td></tr>
+        <tr><td>② 工程化分块</td><td>magnetostatic 包</td><td>(-0.56731597, -0.57342061, 1.66752555)</td><td>逐位一致</td></tr>
+        <tr><td>③ FEALPy 集成</td><td>fealpy.cem.fem</td><td>(-0.56731597, -0.57342061, 1.66752555)</td><td>逐位一致</td></tr>
+      </table>
+      <div class="callout"><b>两个关键技术点：</b>① 角点形式把最初程序的角点算式原样传给 Gmsh——center/size 往返会差 1 ulp，足以改变网格（实测力差 2e-6 N）；② 求解器本身有 ~1e-12 N 的 OpenMP 归约噪声，回归判据定为「网格逐位一致 + 磁力 rtol=1e-9」。</div>
+      <p style="text-align:center;color:var(--muted)">p=2, d=0 同样逐位一致：F0 = (-0.58042072, -0.57281791, 1.73712687) · 回归测试：test_benchmark_regression.py（19 项算例端测试之一）。</p>
+    </section>
+  </div>
+
+  <!-- 第 9 页：结果与对标 -->
+  <div class="page" data-title="结果与对标">
+    <section data-kicker="Results">
+      <h2><span class="no">09</span>结果与对标（本机当前代码生成）</h2>
+      <p style="text-align:center;color:var(--muted)">集成入口 p=2 全位移扫描（16 工况）的对标结果，与三站链条同一套数值。</p>
+      <div class="figrow">
+        <figure class="fig">
+          <a href="results/force_comparison.png" target="_blank" title="点击查看原图">
+            <img src="results/force_comparison.png" alt="力—位移对比曲线">
+          </a>
+          <figcaption><b>图 1 · 力—位移对比曲线</b>：FEALPy FEM 的 Fx / Fy 与 Akoun–Yonnet、ANSYS 逐点对比。</figcaption>
+        </figure>
+        <figure class="fig">
+          <a href="results/force_error.png" target="_blank" title="点击查看原图">
+            <img src="results/force_error.png" alt="带符号误差曲线">
+          </a>
+          <figcaption><b>图 2 · 带符号误差曲线</b>（FEALPy − 参考）：零线区分正负偏差。</figcaption>
+        </figure>
+      </div>
+      <div class="callout"><b>口径：</b>对 Akoun–Yonnet 归一化 RMSE 约 0.67% / 1.94%（Fx / Fy），对 ANSYS 约 2.17% / 4.14%——与最初程序的验证结论一致。</div>
+    </section>
+  </div>
+
+  <!-- 第 12 页：使用与下一步 -->
+  <div class="page" data-title="使用与下一步">
+    <section data-kicker="Usage & next">
+      <h2><span class="no">10</span>使用方式与下一步</h2>
+      <pre class="cmd"><code># 单工况（自动使用本目录 vendored fealpy）
+python modular_double_magnet_benchmark.py --d 0 --p 2
+
+# 全部 fealpy 测试 + 算例端测试
+PYTHONPATH=fealpy python -m pytest \
+    fealpy/tests/material fealpy/tests/mesher/test_box_region_mesher.py \
+    fealpy/tests/cem/fem -q
+PYTHONPATH=fealpy python -m pytest test_comparison.py \
+    test_double_magnet_cli.py test_benchmark_regression.py -q</code></pre>
+      <div class="takeaways">
+        <div class="takeaway"><b>已闭环</b><span>三站讲解链完整：算例原型 → 工程化分块 → FEALPy 集成，数值逐位贯通。</span></div>
+        <div class="takeaway"><b>可继续</b><span>函数式力入口可抽共享积分函数；mu0 常量可提议迁入 fealpy.physics。</span></div>
+        <div class="takeaway"><b>另行开发</b><span>CGraph 节点库（11 节点 + 2 工作流）作为后续课题单独立项。</span></div>
+      </div>
+      <div class="callout"><b>通用性专题：</b>三磁体 + 软磁实测案例、「能 / 不能」边界表、常见问题与四步流程见
+      <a href="集成通用性.html" target="_blank">集成通用性.html</a>。</div>
+      <p class="foot">完 · 完整讲解与关键代码对照见 <a href="集成_详细版.html" target="_blank">集成_详细版.html（详细版）</a></p>
+    </section>
+  </div>
+
+</div>
+
+<nav class="bottom">
+  <button class="navbtn" id="prev" type="button">‹ 上一页</button>
+  <div class="dots" id="dots"></div>
+  <button class="navbtn" id="next" type="button">下一页 ›</button>
+  <span class="pageno" id="pageno">1 / 11</span>
+  <span class="slide-title" id="slideTitle">开场</span>
+  <button class="toolbtn" id="fullscreen" type="button" title="进入全屏">全屏</button>
+</nav>
+
+<script>
+(function () {
+  var pages = Array.prototype.slice.call(document.querySelectorAll('.page'));
+  var dotsBox = document.getElementById('dots');
+  var pageno = document.getElementById('pageno');
+  var prevBtn = document.getElementById('prev');
+  var nextBtn = document.getElementById('next');
+  var progressbar = document.getElementById('progressbar');
+  var slideTitle = document.getElementById('slideTitle');
+  var fullscreenBtn = document.getElementById('fullscreen');
+  var cur = 0;
+  var touchStartX = null;
+
+  var dots = pages.map(function (_, k) {
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.type = 'button';
+    d.title = '第 ' + (k + 1) + ' 页';
+    d.setAttribute('aria-label', d.title + '：' + (pages[k].dataset.title || ''));
+    d.addEventListener('click', function () { show(k); });
+    dotsBox.appendChild(d);
+    return d;
+  });
+
+  function show(i) {
+    cur = Math.max(0, Math.min(pages.length - 1, i));
+    pages.forEach(function (p, k) { p.classList.toggle('active', k === cur); });
+    dots.forEach(function (d, k) { d.classList.toggle('on', k === cur); });
+    pageno.textContent = (cur + 1) + ' / ' + pages.length;
+    slideTitle.textContent = pages[cur].dataset.title || '';
+    progressbar.style.width = ((cur + 1) / pages.length * 100) + '%';
+    prevBtn.disabled = (cur === 0);
+    nextBtn.disabled = (cur === pages.length - 1);
+    window.scrollTo(0, 0);
+    history.replaceState(null, '', '#slide-' + (cur + 1));
+  }
+  function next() { if (cur < pages.length - 1) show(cur + 1); }
+  function prev() { if (cur > 0) show(cur - 1); }
+
+  prevBtn.addEventListener('click', function (e) { e.stopPropagation(); prev(); });
+  nextBtn.addEventListener('click', function (e) { e.stopPropagation(); next(); });
+
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('a, button, pre, table, .mathbox')) return;
+    next();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault(); next();
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault(); prev();
+    } else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(pages.length - 1); }
+  });
+
+  document.addEventListener('touchstart', function (e) { touchStartX = e.changedTouches[0].screenX; }, {passive:true});
+  document.addEventListener('touchend', function (e) {
+    if (touchStartX === null) return;
+    var dx = e.changedTouches[0].screenX - touchStartX;
+    if (Math.abs(dx) > 55) { dx < 0 ? next() : prev(); }
+    touchStartX = null;
+  }, {passive:true});
+  fullscreenBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+    else document.exitFullscreen && document.exitFullscreen();
+  });
+
+  var initial = parseInt((location.hash.match(/slide-(\d+)/) || [])[1], 10);
+  show(Number.isFinite(initial) ? initial - 1 : 0);
+})();
+</script>
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['\\(', '\\)']] },
+    svg: { fontCache: 'local' }
+  };
+</script>
+<script src="mathjax/tex-svg.js"></script>
+</body>
+</html>

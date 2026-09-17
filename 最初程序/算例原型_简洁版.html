@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>双永磁体三维静磁算例（翻页演示）</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --panel:#ffffff; --ink:#212734; --muted:#5c6575;
+    --accent:#2563eb; --line:#e3e6eb; --chip:#eaf0ff; --chip-ink:#2f46a3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"SimSun","宋体","Songti SC","Noto Serif CJK SC","Source Han Serif SC","AR PL UMing CN","AR PL UMing HK","AR PL UMing TW",serif;
+    line-height:1.8;padding-bottom:66px;}
+  .deck{margin:0;padding:10px 18px 0;}
+  .page{display:none;}
+  .page.active{display:flex;align-items:center;justify-content:center;
+    min-height:calc(100vh - 92px);animation:pageIn .35s ease;}
+  .page > header.top, .page > section{width:100%;max-width:960px;
+    max-height:calc(100vh - 112px);overflow-y:auto;}
+  @keyframes pageIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  header.top{text-align:center;padding:24px 10px;}
+  header.top h1{margin:0 0 10px;font-size:30px;}
+  header.top p{margin:6px 0 0;color:var(--muted);font-size:16px;}
+  header.top .hint{margin-top:22px;color:var(--accent);font-size:15px;}
+  section{background:transparent;border:none;border-radius:0;box-shadow:none;
+    padding:0 8px 10px;overflow:visible;}
+  h2{font-size:25px;font-weight:700;text-align:center;color:#111827;
+    margin:8px 0 20px;padding:0;}
+  h2 .no{color:var(--accent);margin-right:8px;}
+  h2::after{content:"";display:block;width:64px;height:3px;margin:10px auto 0;
+    background:var(--accent);border-radius:2px;}
+  p,li{font-size:15.5px;}
+  ul,ol{margin:8px 0;padding-left:22px;}
+  li{margin:5px 0;}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;margin:10px 0;}
+  th,td{border:1px solid var(--line);padding:6px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f4f8;font-weight:600;white-space:nowrap;}
+  td.num,th.num{text-align:center;}
+  .callout{border-left:3px solid var(--accent);background:#f0f6ff;padding:9px 14px;
+    border-radius:0 8px 8px 0;margin:10px 0;font-size:15px;}
+  .mathbox{background:#f7f9fc;border:1px dashed var(--line);border-radius:10px;
+    padding:16px 20px;margin:12px 0;text-align:center;}
+  .math{font-family:"STIX Two Math","Cambria Math","Times New Roman",Georgia,serif;
+    font-size:18px;margin:7px 0;}
+  .math.small{font-size:14.5px;color:var(--muted);}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0 4px;}
+  .chip{background:var(--chip);color:var(--chip-ink);border-radius:999px;
+    padding:3px 12px;font-size:13.5px;white-space:nowrap;}
+  .flow .arrow{color:#9aa3b0;}
+  .figrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
+  @media(max-width:900px){.figrow{grid-template-columns:1fr}}
+  figure.fig{margin:0;}
+  figure.fig img{display:block;width:100%;height:auto;border-radius:8px;}
+  figure.fig figcaption{padding:7px 2px;font-size:13px;color:var(--muted);line-height:1.6;}
+  figure.fig figcaption b{color:var(--ink);}
+  pre.cmd{background:#eef1f5;border-radius:8px;padding:10px 14px;font-size:13.5px;overflow:auto;}
+  .foot{color:var(--muted);font-size:14px;margin-top:14px;}
+  .foot a{color:var(--accent);}
+  /* 底部导航 */
+  nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:10;
+    background:rgba(255,255,255,.94);border-top:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    padding:10px 16px;backdrop-filter:blur(4px);}
+  nav.bottom button.navbtn{border:1px solid var(--line);background:var(--panel);
+    color:var(--ink);border-radius:8px;cursor:pointer;font-size:14px;
+    padding:4px 14px;font-family:inherit;}
+  nav.bottom button.navbtn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+  nav.bottom button.navbtn:disabled{opacity:.4;cursor:default;}
+  .dots{display:flex;align-items:center;gap:7px;}
+  .dot{border:none;width:10px;height:10px;border-radius:50%;
+    background:#c3cad4;cursor:pointer;padding:0;transition:all .2s;}
+  .dot.on{background:var(--accent);transform:scale(1.25);}
+  .pageno{font-size:13px;color:var(--muted);min-width:44px;text-align:center;}
+  /* 2026 汇报版视觉系统 */
+  :root{
+    --bg:#eef3f7;--panel:#ffffff;--ink:#102235;--muted:#5e6d7c;
+    --accent:#0f766e;--accent-2:#ea6a47;--line:#d8e2e8;
+    --chip:#dff4f0;--chip-ink:#0c645e;--shadow:0 22px 65px rgba(25,50,70,.12);
+  }
+  html{scroll-behavior:smooth}
+  body{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;
+    background:
+      radial-gradient(circle at 8% 8%,rgba(15,118,110,.10),transparent 28%),
+      radial-gradient(circle at 92% 88%,rgba(234,106,71,.10),transparent 26%),var(--bg);
+    line-height:1.65;overflow-x:hidden;}
+  .progress-track{position:fixed;inset:0 0 auto;z-index:30;height:4px;background:rgba(16,34,53,.08)}
+  .progress-track span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .35s ease}
+  .deck{max-width:1240px;margin:0 auto;padding:18px 28px 0}
+  .page.active{min-height:calc(100vh - 98px)}
+  .page > header.top,.page > section{max-width:1120px;max-height:calc(100vh - 128px);
+    scrollbar-width:thin;scrollbar-color:#a7bbb9 transparent}
+  .page > section{background:rgba(255,255,255,.92);border:1px solid rgba(216,226,232,.9);
+    border-radius:24px;box-shadow:var(--shadow);padding:28px 36px 30px;position:relative}
+  .page > section::before{content:attr(data-kicker);display:block;color:var(--accent);font-size:12px;
+    font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px;text-align:center}
+  header.top{background:linear-gradient(145deg,#0e2638,#133f4c);border-radius:28px;
+    padding:58px 64px;color:#fff;box-shadow:var(--shadow);text-align:left;position:relative;overflow:hidden}
+  header.top::after{content:"";position:absolute;width:340px;height:340px;border-radius:50%;
+    right:-110px;top:-155px;border:1px solid rgba(255,255,255,.16);box-shadow:0 0 0 48px rgba(255,255,255,.035),0 0 0 96px rgba(255,255,255,.025)}
+  header.top h1{font-size:clamp(34px,5vw,58px);line-height:1.12;letter-spacing:-.04em;max-width:780px;color:#fff;position:relative;z-index:1}
+  header.top p{font-size:17px;max-width:840px;color:#cfe0e6;position:relative;z-index:1}
+  header.top b{color:#fff}
+  header.top a{color:#9fe7dc;text-underline-offset:3px}
+  header.top .hint{color:#98e4d8;margin-top:24px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.12em;
+    color:#9fe7dc;text-transform:uppercase;margin-bottom:18px;position:relative;z-index:1}
+  .eyebrow::before{content:"";width:28px;height:2px;background:var(--accent-2)}
+  .hero-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:28px 0 0;position:relative;z-index:1}
+  .hero-metrics span{padding:12px 14px;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.06);font-size:12px;color:#cfe0e6}
+  .hero-metrics b{display:block;font-size:20px;color:#fff;margin-bottom:2px}
+  h2{font-size:clamp(25px,3vw,34px);color:var(--ink);letter-spacing:-.02em;margin-top:2px}
+  h2::after{background:linear-gradient(90deg,var(--accent),var(--accent-2));height:4px}
+  p,li{font-size:15px}
+  th{background:#eaf3f3;color:#163f42}
+  th,td{border-color:var(--line);padding:8px 12px}
+  .callout{border:none;border-left:4px solid var(--accent);background:#eaf7f5;border-radius:10px;padding:12px 16px}
+  .mathbox{background:#f6fafb;border:1px solid var(--line)}
+  .chip{background:var(--chip);color:var(--chip-ink);border:1px solid #c8e9e3;font-weight:650;padding:5px 12px}
+  .flow{justify-content:center;gap:8px}
+  figure.fig{border:1px solid var(--line);border-radius:15px;overflow:hidden;background:#fff}
+  figure.fig img{transition:transform .28s ease}
+  figure.fig:hover img{transform:scale(1.018)}
+  figure.fig figcaption{padding:9px 12px}
+  .roadmap{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+  .stage-card{border:1px solid var(--line);border-radius:18px;padding:22px;background:#f8fbfc;position:relative}
+  .stage-card.active{background:linear-gradient(150deg,#e2f6f2,#fff);border-color:#8bcfc4;box-shadow:0 12px 30px rgba(15,118,110,.12)}
+  .stage-card .step{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.1em}
+  .stage-card h3{margin:7px 0 8px;font-size:19px}
+  .stage-card p{margin:0;color:var(--muted);font-size:13.5px}
+  .stage-card.active::after{content:"当前";position:absolute;right:14px;top:14px;background:var(--accent);color:#fff;border-radius:999px;padding:2px 9px;font-size:11px}
+  .geometry-card{display:grid;grid-template-columns:minmax(440px,1.4fr) 1fr;gap:22px;align-items:center;
+    border:1px solid var(--line);border-radius:18px;background:#f8fbfc;padding:15px 20px;margin:10px 0 18px}
+  .geometry-card img{width:100%;height:auto;display:block}
+  .geometry-note{font-size:14px;color:var(--muted)}
+  .geometry-note strong{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}
+  .takeaways{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+  .takeaway{border-top:3px solid var(--accent);background:#f7fafb;border-radius:10px;padding:13px}
+  .takeaway b{display:block;color:var(--ink);margin-bottom:4px}.takeaway span{font-size:13px;color:var(--muted)}
+  nav.bottom{background:rgba(247,250,251,.92);border-color:var(--line);padding:9px 18px;backdrop-filter:blur(14px)}
+  nav.bottom button.navbtn,.toolbtn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;cursor:pointer;padding:6px 15px;font-family:inherit}
+  nav.bottom button.navbtn:hover:not(:disabled),.toolbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .dot{width:8px;height:8px;background:#b9c6cc}.dot.on{background:var(--accent);width:24px;border-radius:8px;transform:none}
+  .slide-title{font-size:12px;color:var(--muted);min-width:88px;text-align:right}
+  @media(max-width:760px){
+    .deck{padding:10px 10px 0}.page > section{padding:22px 18px;border-radius:18px}
+    header.top{padding:38px 26px}.hero-metrics{grid-template-columns:1fr 1fr}
+    .roadmap,.takeaways{grid-template-columns:1fr}.geometry-card{grid-template-columns:1fr}
+    .geometry-card svg{height:150px}.slide-title,#fullscreen{display:none}.dots{gap:5px}
+    nav.bottom{gap:8px}.page > header.top,.page > section{max-height:calc(100vh - 105px)}
+  }
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="progress-track" aria-hidden="true"><span id="progressbar"></span></div>
+<div class="deck">
+
+  <!-- 第 1 页：标题 -->
+  <div class="page active" data-title="开场">
+    <header class="top">
+      <div class="eyebrow">FEALPy integration study · stage 01</div>
+      <h1>双永磁体三维静磁算例</h1>
+      <p>两块沿 +z 平行充磁的长方体永磁体，上磁体沿 x 平移 d = 0..30 mm，
+      用<b>磁标势有限元</b>求磁力，对标 <b>Akoun–Yonnet 解析解</b>与 <b>ANSYS EMFT 参考</b>。</p>
+      <p>最初程序 <code>double_magnet_benchmark.py</code>（558 行单文件）· 详细讲解（含关键代码对照）见
+      <a href="算例原型_详细版.html" target="_blank">详细版</a>。</p>
+      <div class="hero-metrics">
+        <span><b>16</b>位移工况</span><span><b>p = 1 / 2</b>有限元阶次</span>
+        <span><b>2 类</b>独立参考</span><span><b>&lt; 2%</b>对解析解 RMSE</span>
+      </div>
+      <p class="hint">👆 点击页面任意处进入下一页（也可用 ← / → 方向键，或底部按钮）</p>
+    </header>
+  </div>
+
+  <!-- 第 2 页：项目路线 -->
+  <div class="page" data-title="三阶段路线">
+    <section data-kicker="Project route">
+      <h2><span class="no">01</span>为什么从“最初程序”开始</h2>
+      <p style="text-align:center;color:var(--muted);max-width:760px;margin:0 auto 18px">本项目不是一次性搬运代码，而是逐步回答三个不同问题：数值是否可信、职责能否拆清、能力是否值得进入 FEALPy 公共接口。</p>
+      <div class="roadmap">
+        <article class="stage-card active"><span class="step">STAGE 01</span><h3>独立算例基线</h3><p>单文件闭环计算，以解析解与 ANSYS 建立可复现的数值基准。</p></article>
+        <article class="stage-card"><span class="step">STAGE 02</span><h3>算例工程化分块</h3><p>按 geometry / mesh / solver / postprocess 拆分，结果保持不变。</p></article>
+        <article class="stage-card"><span class="step">STAGE 03</span><h3>FEALPy 通用化集成</h3><p>提炼公共接口、补齐测试，让算例成为通用能力的使用者。</p></article>
+      </div>
+      <div class="callout" style="margin-top:18px"><b>本阶段结论：</b>先冻结一个可信的数值基线，后续每次分块或集成都能回答“结构变了，结果是否仍然正确”。</div>
+    </section>
+  </div>
+
+  <!-- 第 3 页：几何与位移 -->
+  <div class="page" data-title="几何与位移">
+    <section data-kicker="Geometry">
+      <h2><span class="no">1</span>算例几何与位移</h2>
+      <div class="geometry-card">
+        <img src="../初步集成/results/double_magnet_geometry.png" alt="双磁体几何示意图" style="width:100%;height:auto;display:block;border-radius:10px">
+        <div class="geometry-note"><strong>一个移动参数，一条完整验证链</strong>上磁体沿 x 方向移动；两块磁体均沿 +z 充磁。虚线盒包围下磁体，在其表面积分 Maxwell 应力，再与 Akoun–Yonnet 和 ANSYS 对标。</div>
+      </div>
+      <div class="takeaways">
+        <div class="takeaway"><b>磁体尺寸不同</b><span>下磁体 20 × 12 × 6 mm，上磁体 12 × 20 × 6 mm。</span></div>
+        <div class="takeaway"><b>只移动上磁体</b><span>d = 0, 2, …, 30 mm，沿 +x 方向扫描。</span></div>
+        <div class="takeaway"><b>积分面独立</b><span>Maxwell 盒位于空气中，只包围下磁体。</span></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="page" data-title="问题与建模">
+    <section data-kicker="Model setup">
+      <h2><span class="no">2</span>物理参数与数学建模</h2>
+      <table>
+        <tr><th>区域</th><th>下角点 (mm)</th><th>上角点 (mm)</th><th>尺寸 (mm)</th></tr>
+        <tr><td>空气盒 air</td><td>(−30, −30, −27)</td><td>(x_max, 30, 27)，x_max = 30 + max(d−8, 0)</td><td>随 d 伸长</td></tr>
+        <tr><td>下磁体 magnet1</td><td>(−10, −6, −3)</td><td>(10, 6, 3)</td><td>20 × 12 × 6</td></tr>
+        <tr><td>上磁体 magnet2</td><td>(−10+d, −14, 5)</td><td>(2+d, 6, 11)</td><td>12 × 20 × 6</td></tr>
+        <tr><td>Maxwell 应力盒</td><td>(−12, −8, −5)</td><td>(12, 8, 4)</td><td>24 × 16 × 9</td></tr>
+      </table>
+      <ul>
+        <li>材料：剩磁 \(B_{r,z}=0.38\) T、\(M_z=B_{r,z}/\mu_0\approx 3.02\times 10^{5}\) A/m，所有区域 \(\mu_r=1\)；</li>
+        <li>Maxwell 盒只包围下磁体，在盒面积分应力得下磁体受力 \(F_0\)，上磁体受力 \(F_1=-F_0\)。</li>
+      </ul>
+      <div class="mathbox">
+        <div class="math">\(\nabla\cdot\mathbf{B}=0,\qquad \mathbf{B}=\mu_0(\mu_r\mathbf{H}+\mathbf{M}),\qquad \mathbf{H}=-\nabla\varphi\)</div>
+        <div class="math">弱形式：\(\displaystyle\int_\Omega \mu_r\nabla\varphi\cdot\nabla v\,\mathrm{d}x=\int_\Omega \mathbf{M}\cdot\nabla v\,\mathrm{d}x\)</div>
+        <div class="math small">外边界齐次自然条件 \(\mathbf{B}\cdot\mathbf{n}=0\)（截断空气盒近似无限域）</div>
+      </div>
+      <div class="callout"><b>纯 Neumann 注意点</b>：刚度矩阵有常数核，右端与常数函数正交（系统相容），
+      零初值 CG 直接收敛；常数平移不影响 \(\nabla\varphi\)，故不影响 \(\mathbf{B}\) 和力。</div>
+    </section>
+  </div>
+
+  <!-- 第 5 页：求解流程 -->
+  <div class="page" data-title="数值流程">
+    <section data-kicker="Numerical pipeline">
+      <h2><span class="no">3</span>求解流程</h2>
+      <div class="flow">
+        <span class="chip">Gmsh 几何建模</span><span class="arrow">→</span>
+        <span class="chip">fragment 共形合并</span><span class="arrow">→</span>
+        <span class="chip">尺寸场（近细远粗）</span><span class="arrow">→</span>
+        <span class="chip">线性四面体网格</span><span class="arrow">→</span>
+        <span class="chip">区域标签 0/1/2/3</span><span class="arrow">→</span>
+        <span class="chip">LagrangeFESpace(p)</span><span class="arrow">→</span>
+        <span class="chip">组装</span><span class="arrow">→</span>
+        <span class="chip">PyAMG-CG</span><span class="arrow">→</span>
+        <span class="chip">Maxwell 应力积分</span><span class="arrow">→</span>
+        <span class="chip">对标 AY / ANSYS</span>
+      </div>
+      <ul>
+        <li><b>网格</b>：Gmsh 只出线性四面体，有限元次数 p = 1 / 2 由 <code>LagrangeFESpace</code> 控制；每个位移 d 重建网格；</li>
+        <li><b>组装</b>：刚度 \(\int\nabla\varphi\cdot\nabla v\) + 磁化右端 \(\int\mathbf{M}\cdot\nabla v\)（用单元标签定位磁体）；</li>
+        <li><b>求解</b>：PyAMG smoothed-aggregation 预条件 CG（rtol=1e-10，atol=1e-12）；</li>
+        <li><b>后处理</b>：盒内/外空气的标签跳变（0↔1）找 Maxwell 面，法向指向盒外，
+        积分 \(\displaystyle\mathbf{F}=\int_S \frac{1}{\mu_0}\left[(\mathbf{B}\cdot\mathbf{n})\mathbf{B}-\frac{1}{2}|\mathbf{B}|^2\mathbf{n}\right]\mathrm{d}x\) 得力。</li>
+      </ul>
+    </section>
+  </div>
+
+  <!-- 第 6 页：结果与验证 -->
+  <div class="page" data-title="结果与验证">
+    <section data-kicker="Validation">
+      <h2><span class="no">4</span>结果与验证</h2>
+      <p><b>典型工况</b>（p=2，d=0，初始位置；对比量取上磁体受力 \(F_1\)）：</p>
+      <table>
+        <tr><th>来源</th><th class="num">Fx (N)</th><th class="num">Fy (N)</th><th class="num">Fx 误差</th><th class="num">Fy 误差</th></tr>
+        <tr><td>FEALPy FEM</td><td class="num">0.580421</td><td class="num">0.572818</td><td class="num">—</td><td class="num">—</td></tr>
+        <tr><td>Akoun–Yonnet</td><td class="num">0.588356</td><td class="num">0.588356</td><td class="num">−1.3%</td><td class="num">−2.6%</td></tr>
+        <tr><td>ANSYS 参考</td><td class="num">0.594460</td><td class="num">0.629140</td><td class="num">−2.4%</td><td class="num">−9.0%</td></tr>
+      </table>
+      <div class="callout">偏差来源：AY 是无限域精确解，FEM 用截断空气盒近似，误差含区域截断误差；ANSYS Fy 的 9% 偏差属原 benchmark 已知量级。</div>
+      <p><b>全位移扫描</b>（p=2，16 个位移工况，归一化 RMSE）：
+      对 Akoun–Yonnet 的 Fx / Fy 分别为 0.67% / 1.94%，对 ANSYS 分别为 2.17% / 4.14%；
+      各工况的计算结果与两类参考曲线形状一致。</p>
+      <div class="figrow">
+        <figure class="fig">
+          <a href="images/force_displacement.png" target="_blank" title="点击查看原图">
+            <img src="images/force_displacement.png" alt="力—位移对比曲线">
+          </a>
+          <figcaption><b>图 1 · 力—位移对比曲线</b>（p=1 / p=2，16 工况）</figcaption>
+        </figure>
+        <figure class="fig">
+          <a href="images/force_error.png" target="_blank" title="点击查看原图">
+            <img src="images/force_error.png" alt="带符号误差曲线">
+          </a>
+          <figcaption><b>图 2 · 带符号误差曲线</b>（FEALPy − 参考）</figcaption>
+        </figure>
+      </div>
+    </section>
+  </div>
+
+  <!-- 第 7 页：复现与讨论 -->
+  <div class="page" data-title="复现与讨论">
+    <section data-kicker="Reproduce & discuss">
+      <h2><span class="no">5</span>复现方式与下一步</h2>
+      <pre class="cmd"><code># 单工况（d=0 mm，p=2）
+python double_magnet_benchmark.py --d 0 --p 2
+
+# 全扫描（p=1 与 p=2，16 个位移，弹出曲线与误差图）
+python double_magnet_benchmark.py --scan</code></pre>
+      <p style="font-size:14px;color:var(--muted)">对应文件：<code>double_magnet_benchmark.py</code>（558 行单文件）。</p>
+      <div class="takeaways">
+        <div class="takeaway"><b>数值基线</b><span>解析解与 ANSYS 双重对标，为后续重构提供判据。</span></div>
+        <div class="takeaway"><b>下一步</b><span>先做职责分块，并用同一批工况进行回归比较。</span></div>
+        <div class="takeaway"><b>希望讨论</b><span>网格标签、奇异系统与 Maxwell 后处理应进入 FEALPy 哪一层。</span></div>
+      </div>
+      <p class="foot">完 · 完整讲解与关键代码对照见 <a href="算例原型_详细版.html" target="_blank">算例原型_详细版.html（详细版）</a> ·
+      下一站 <a href="../初步分块/模块化_简洁版.html" target="_blank">算例工程化分块（Stage 02）</a></p>
+    </section>
+  </div>
+
+</div>
+
+<nav class="bottom">
+  <button class="navbtn" id="prev" type="button">‹ 上一页</button>
+  <div class="dots" id="dots"></div>
+  <button class="navbtn" id="next" type="button">下一页 ›</button>
+  <span class="pageno" id="pageno">1 / 7</span>
+  <span class="slide-title" id="slideTitle">开场</span>
+  <button class="toolbtn" id="fullscreen" type="button" title="进入全屏">全屏</button>
+</nav>
+
+<script>
+(function () {
+  var pages = Array.prototype.slice.call(document.querySelectorAll('.page'));
+  var dotsBox = document.getElementById('dots');
+  var pageno = document.getElementById('pageno');
+  var prevBtn = document.getElementById('prev');
+  var nextBtn = document.getElementById('next');
+  var progressbar = document.getElementById('progressbar');
+  var slideTitle = document.getElementById('slideTitle');
+  var fullscreenBtn = document.getElementById('fullscreen');
+  var cur = 0;
+  var touchStartX = null;
+
+  var dots = pages.map(function (_, k) {
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.type = 'button';
+    d.title = '第 ' + (k + 1) + ' 页';
+    d.setAttribute('aria-label', d.title + '：' + (pages[k].dataset.title || ''));
+    d.addEventListener('click', function () { show(k); });
+    dotsBox.appendChild(d);
+    return d;
+  });
+
+  function show(i) {
+    cur = Math.max(0, Math.min(pages.length - 1, i));
+    pages.forEach(function (p, k) { p.classList.toggle('active', k === cur); });
+    dots.forEach(function (d, k) { d.classList.toggle('on', k === cur); });
+    pageno.textContent = (cur + 1) + ' / ' + pages.length;
+    slideTitle.textContent = pages[cur].dataset.title || '';
+    progressbar.style.width = ((cur + 1) / pages.length * 100) + '%';
+    prevBtn.disabled = (cur === 0);
+    nextBtn.disabled = (cur === pages.length - 1);
+    window.scrollTo(0, 0);
+    history.replaceState(null, '', '#slide-' + (cur + 1));
+  }
+  function next() { if (cur < pages.length - 1) show(cur + 1); }
+  function prev() { if (cur > 0) show(cur - 1); }
+
+  prevBtn.addEventListener('click', function (e) { e.stopPropagation(); prev(); });
+  nextBtn.addEventListener('click', function (e) { e.stopPropagation(); next(); });
+
+  /* 点击页面任意处（链接、按钮除外）进入下一页 */
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('a, button, pre, table, figure, .mathbox, .geometry-card')) return;
+    next();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault(); next();
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault(); prev();
+    } else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(pages.length - 1); }
+  });
+
+  document.addEventListener('touchstart', function (e) { touchStartX = e.changedTouches[0].screenX; }, {passive:true});
+  document.addEventListener('touchend', function (e) {
+    if (touchStartX === null) return;
+    var dx = e.changedTouches[0].screenX - touchStartX;
+    if (Math.abs(dx) > 55) { dx < 0 ? next() : prev(); }
+    touchStartX = null;
+  }, {passive:true});
+  fullscreenBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+    else document.exitFullscreen && document.exitFullscreen();
+  });
+
+  var initial = parseInt((location.hash.match(/slide-(\d+)/) || [])[1], 10);
+  show(Number.isFinite(initial) ? initial - 1 : 0);
+})();
+</script>
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['\\(', '\\)']] },
+    svg: { fontCache: 'local' }
+  };
+</script>
+<script src="mathjax/tex-svg.js"></script>
+</body>
+</html>
