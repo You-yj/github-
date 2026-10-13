@@ -1,0 +1,104 @@
+\documentclass{article}
+\usepackage{amsmath,amssymb}
+\begin{document}
+
+% Local fields on neighboring cells
+\[
+\mathbf E_h|_{K_1}=\mathbf E_1,\qquad
+\mathbf E_h|_{K_2}=\mathbf E_2.
+\]
+
+% Tangential and normal components; interface conditions
+\[
+E_t=\mathbf E\cdot\mathbf t,\qquad
+E_n=\mathbf E\cdot\mathbf n,
+\qquad
+(\mathbf E_1-\mathbf E_2)\cdot\mathbf t=0.
+\]
+\[
+\mathbf n\cdot(\mathbf D_2-\mathbf D_1)=\rho_s,
+\qquad \mathbf D=\varepsilon\mathbf E.
+\]
+
+% Function space and lowest-order edge degree of freedom
+% Full vector continuity is stronger than tangential continuity.
+\[
+\mathbf E_1|_e=\mathbf E_2|_e
+\quad\Longrightarrow\quad
+(\mathbf E_1-\mathbf E_2)\cdot\mathbf t=0.
+\]
+\[
+d_e(\mathbf E_i)=\int_e\mathbf E_i\cdot\mathbf t_e\,\mathrm ds,
+\qquad d_e(\mathbf E_1)=d_e(\mathbf E_2).
+\]
+
+\[
+H(\operatorname{curl};\Omega)
+=\{\mathbf v\in[L^2(\Omega)]^2:
+\operatorname{curl}\mathbf v\in L^2(\Omega)\}.
+\]
+\[
+d_e(\mathbf E)=\int_e\mathbf E\cdot\mathbf t_e\,\mathrm ds,
+\qquad
+\mathbf N_{ij}=\lambda_i\nabla\lambda_j-\lambda_j\nabla\lambda_i.
+\]
+
+% Model problem and manufactured solution
+% A pure scalar-potential field is curl-free on this simply connected domain.
+\[
+\mathbf E=-\nabla\phi
+\quad\Longrightarrow\quad
+\operatorname{curl}\mathbf E=0.
+\]
+
+\[
+\operatorname{curl}\operatorname{curl}\mathbf E+\mathbf E=\mathbf f
+\quad\text{in }\Omega=(0,1)^2,
+\qquad
+\mathbf E\cdot\mathbf t=0\quad\text{on }\partial\Omega.
+\]
+\[
+\operatorname{curl}\mathbf E
+=\frac{\partial E_y}{\partial x}-\frac{\partial E_x}{\partial y},
+\qquad
+\operatorname{curl}q
+=\left(\frac{\partial q}{\partial y},-\frac{\partial q}{\partial x}\right).
+\]
+\[
+\mathbf E_{\mathrm{exact}}(x,y)
+=\bigl(\sin(\bm.pi y),\sin(\bm.pi x)\bigr),
+\qquad
+\mathbf f=(\bm.pi^2+1)\mathbf E_{\mathrm{exact}}.
+\]
+\[
+\operatorname{curl}\mathbf E_{\mathrm{exact}}
+=\bm.pi\bigl(\cos(\bm.pi x)-\cos(\bm.pi y)\bigr)\not\equiv0.
+\]
+
+% Weak form and matrix system
+\[
+\int_\Omega(\operatorname{curl}\mathbf E)(\operatorname{curl}\mathbf v)
+\,\mathrm d\Omega
++\int_\Omega\mathbf E\cdot\mathbf v\,\mathrm d\Omega
+=\int_\Omega\mathbf f\cdot\mathbf v\,\mathrm d\Omega.
+\]
+\[
+\begin{aligned}
+C_{ij}&=\int_\Omega
+(\operatorname{curl}\mathbf N_j)(\operatorname{curl}\mathbf N_i)
+\,\mathrm d\Omega,\\
+M_{ij}&=\int_\Omega\mathbf N_j\cdot\mathbf N_i\,\mathrm d\Omega,\\
+b_i&=\int_\Omega\mathbf f\cdot\mathbf N_i\,\mathrm d\Omega,
+\qquad (C+M)\mathbf u=\mathbf b.
+\end{aligned}
+\]
+
+% Validation errors
+\[
+e_E=\|\mathbf E-\mathbf E_h\|_{L^2(\Omega)},
+\qquad
+e_{\mathrm{curl}}
+=\|\operatorname{curl}(\mathbf E-\mathbf E_h)\|_{L^2(\Omega)}.
+\]
+
+\end{document}

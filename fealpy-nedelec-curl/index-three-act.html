@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#071c2b">
+  <meta name="description" content="第一类 Nédélec 棱元空间：从整体电场、切向拼接到 FEALPy 实现的三幕交互课件。">
+  <title>第一类 Nédélec 棱元空间</title>
+  <link rel="stylesheet" href="three-act.css?v=20261013-11">
+  <script defer src="three-act.js?v=20261013-11"></script>
+</head>
+<body>
+  <main id="app" aria-label="第一类 Nédélec 棱元空间交互课件">
+    <section class="page cover is-active" id="cover" aria-label="封面">
+      <svg id="coverSvg" viewBox="0 0 1200 720" preserveAspectRatio="xMidYMid slice" role="img" aria-label="电场穿过三角网格，公共边显示切向方向">
+        <defs>
+          <linearGradient id="coverWash" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#102b3c"/><stop offset=".55" stop-color="#0b2634"/><stop offset="1" stop-color="#06202c"/></linearGradient>
+          <radialGradient id="coverGlow"><stop stop-color="#32b7b4" stop-opacity=".24"/><stop offset="1" stop-color="#32b7b4" stop-opacity="0"/></radialGradient>
+          <marker id="coverArrow" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0 0 L5 2.5 L0 5" fill="#9bd9db"/></marker>
+        </defs>
+        <rect width="1200" height="720" fill="url(#coverWash)"/>
+        <circle cx="825" cy="348" r="380" fill="url(#coverGlow)"/>
+        <g id="coverField"></g>
+        <g id="coverGrid"><g id="coverMesh"></g><g id="coverEdges"></g></g>
+      </svg>
+      <div class="cover-content">
+        <div class="cover-rule" aria-hidden="true"></div>
+        <h1>第一类 <em>Nédélec</em><br>棱元空间</h1>
+        <p>以有向边上的切向测量为自由度，使相邻单元的切向信息相容，适合电磁场等旋度型问题。</p>
+      </div>
+      <button class="cover-enter" id="enterKnowledge" type="button" aria-label="进入知识页"><span aria-hidden="true">↓</span></button>
+    </section>
+
+    <section class="page knowledge" id="knowledge" aria-label="知识页" inert>
+      <div class="scene-topline"><span class="scene-number">01 / 知识</span><span class="scene-kicker" id="knowledgeKicker">整体电场</span></div>
+      <div class="knowledge-stage">
+        <svg id="knowledgeSvg" viewBox="0 0 1200 690" role="img" aria-label="从整体电场、单元限制到 Nédélec 棱元全局组装的连续动画">
+          <defs>
+            <marker id="fineArrow" markerWidth="5" markerHeight="5" refX="4.4" refY="2.5" orient="auto"><path d="M0 0 L5 2.5 L0 5" fill="#6bcad3"/></marker>
+            <marker id="tinyArrow" markerWidth="3" markerHeight="3" refX="2.6" refY="1.5" orient="auto"><path d="M0 0 L3 1.5 L0 3" fill="#6bcad3"/></marker>
+            <marker id="warmArrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6" fill="#f1a86c"/></marker>
+            <clipPath id="leftTriClip"><path d="M0 0 L220 0 L0 220 Z"/></clipPath>
+            <clipPath id="rightTriClip"><path d="M220 0 L220 220 L0 220 Z"/></clipPath>
+            <clipPath id="stitchLeftClip"><path d="M0 110 L220 0 L220 220 Z"/></clipPath>
+            <clipPath id="stitchRightClip"><path d="M0 0 L0 220 L220 110 Z"/></clipPath>
+          </defs>
+          <g id="globalField"></g>
+          <g id="globalMesh"></g>
+          <rect id="knowledgeVeil" x="0" y="0" width="1200" height="690" fill="#061925" opacity="0"></rect>
+          <g id="globalFocus"></g>
+          <g id="globalAnnotations"></g>
+          <g id="localLayer">
+            <g id="leftLocal"><path class="local-triangle left-fill" d="M0 0 L220 0 L0 220 Z"/><g id="leftLocalField" clip-path="url(#leftTriClip)"></g><text class="svg-label" x="38" y="138">K₁</text><text class="svg-math" id="leftFieldLabel" x="23" y="72">E|K₁</text></g>
+            <g id="rightLocal"><path class="local-triangle right-fill" d="M220 0 L220 220 L0 220 Z"/><g id="rightLocalField" clip-path="url(#rightTriClip)"></g><text class="svg-label" x="149" y="82">K₂</text><text class="svg-math" id="rightFieldLabel" x="126" y="117">E|K₂</text></g>
+            <path id="sharedEdge" d="M220 0 L0 220"/>
+            <g id="tangentMarks"><path d="M142 80 L92 130" marker-end="url(#fineArrow)"/><path d="M184 122 L134 172" marker-end="url(#fineArrow)"/><text class="svg-math" x="206" y="198">tₑ</text><path class="normal-one" d="M124 108 L93 77"/><path class="normal-two" d="M147 133 L195 181"/></g>
+          </g>
+          <g id="compareLayer"></g>
+          <g id="assemblyLayer"></g>
+          <g id="piolaLayer"></g>
+          <g id="stitchLayer"></g>
+          <g id="finalLayer"></g>
+        </svg>
+        <div class="theory-focus" id="theoryFocus" aria-hidden="true">
+          <section class="theory-panel" id="localTheory">
+            <p class="theory-eyebrow">局部理论 · 一个三角形</p>
+            <h2>局部函数空间</h2>
+            <div class="theory-formula" id="localTheoryFormula">
+              <math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mi>N</mi><mn>0</mn></msub><mo>(</mo><mi>K</mi><mo>)</mo><mo>=</mo><mo>{</mo><mover><mi>a</mi><mo>→</mo></mover><mo>+</mo><mi>b</mi><mo>(</mo><mo>−</mo><mi>y</mi><mo>,</mo><mi>x</mi><mo>)</mo><mo>}</mo></mrow></math>
+            </div>
+            <div class="theory-parts" id="localTheoryParts"><span><b>a⃗</b> 平移趋势</span><i>+</i><span><b>b(−y,x)</b> 旋转趋势</span></div>
+            <p class="theory-conclusion" id="localTheoryConclusion">在一个单元里，场的变化方式先由局部空间规定。</p>
+          </section>
+          <section class="theory-panel theory-compact" id="dofTheory">
+            <p class="theory-eyebrow">局部理论 · 怎样记录一个场</p>
+            <h2>自由度是对场的线性测量</h2>
+            <div class="theory-formula" id="dofTheoryFormula"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mi>d</mi><mi>e</mi></msub><mo>(</mo><mover><mi>v</mi><mo>→</mo></mover><mo>)</mo><mo>=</mo><msub><mo>∫</mo><mi>e</mi></msub><mover><mi>v</mi><mo>→</mo></mover><mo>·</mo><msub><mover><mi>t</mi><mo>→</mo></mover><mi>e</mi></msub><mi>ds</mi></mrow></math></div>
+            <div class="theory-chain" id="dofTheoryChain"><span>dim N₀(K) = 3</span><i>⟹</i><span>三条边上的三个独立读数</span></div>
+            <p class="theory-proof" id="dofTheoryProof">d₁(v) = d₂(v) = d₃(v) = 0　⟹　v = 0</p>
+            <p class="theory-conclusion" id="dofTheoryConclusion">三个读数能够唯一确定一个最低阶局部棱元场。</p>
+          </section>
+          <section class="theory-panel theory-compact" id="basisTheory">
+            <p class="theory-eyebrow">局部理论 · 从读数重建场</p>
+            <h2>自由度与基函数互为对偶</h2>
+            <div class="theory-formula" id="basisTheoryFormula"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mi>d</mi><mi>i</mi></msub><mo>(</mo><msub><mover><mi>N</mi><mo>→</mo></mover><mi>j</mi></msub><mo>)</mo><mo>=</mo><msub><mi>δ</mi><mi>ij</mi></msub></mrow></math></div>
+            <div class="dual-matrix" id="basisTheoryMatrix"><span>1　0　0</span><span>0　1　0</span><span>0　0　1</span></div>
+            <p class="theory-proof" id="basisTheoryRebuild">v = d₁(v)N₁ + d₂(v)N₂ + d₃(v)N₃</p>
+            <p class="theory-conclusion" id="basisTheoryConclusion">测量值同时就是对偶基下的展开系数。</p>
+          </section>
+          <section class="theory-panel theory-compact" id="piolaTheory">
+            <p class="theory-eyebrow">映射理论 · 从参考单元到物理单元</p>
+            <h2>形状改变，边的切向读数保持</h2>
+            <div class="theory-formula" id="piolaTheoryFormula"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mover><mi>v</mi><mo>→</mo></mover><mo>(</mo><mi>x</mi><mo>)</mo><mo>=</mo><msup><msub><mi>B</mi><mi>K</mi></msub><mrow><mo>−</mo><mi>T</mi></mrow></msup><mover><mi>v̂</mi><mo>→</mo></mover><mo>(</mo><msubsup><mi>F</mi><mi>K</mi><mrow><mo>−</mo><mn>1</mn></mrow></msubsup><mo>(</mo><mi>x</mi><mo>)</mo><mo>)</mo></mrow></math></div>
+            <p class="theory-proof" id="piolaTheoryInvariant">∫ₑ v·tₑ ds　=　∫ê v̂·t̂ê dŝ</p>
+            <p class="theory-conclusion" id="piolaTheoryConclusion">Piola 变换不是装饰性的坐标变换，而是有限元定义的一部分。</p>
+          </section>
+          <section class="theory-panel theory-compact" id="directionTheory">
+            <p class="theory-eyebrow">组装理论 · 局部方向与全局方向</p>
+            <h2>同一条边必须采用同一解释</h2>
+            <div class="theory-formula" id="directionTheoryFormula"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mover><mi>t</mi><mo>→</mo></mover><mrow><mi>K</mi><mo>,</mo><mi>e</mi></mrow></msub><mo>=</mo><msub><mi>s</mi><mrow><mi>K</mi><mo>,</mo><mi>e</mi></mrow></msub><msub><mover><mi>t</mi><mo>→</mo></mover><mi>e</mi></msub><mo>,</mo><mspace width="1em"/><msub><mi>s</mi><mrow><mi>K</mi><mo>,</mo><mi>e</mi></mrow></msub><mo>∈</mo><mo>{</mo><mo>−</mo><mn>1</mn><mo>,</mo><mo>+</mo><mn>1</mn><mo>}</mo></mrow></math></div>
+            <p class="theory-proof" id="directionTheoryBasis">Ñₖ,ₑ = sₖ,ₑ Nₖ,ₑ</p>
+            <p class="theory-conclusion" id="directionTheoryConclusion">方向反转时，自由度和对应局部基函数使用同一个符号修正。</p>
+          </section>
+          <section class="theory-panel theory-global" id="globalTheory">
+            <p class="theory-eyebrow">全局理论 · 从局部到整体</p>
+            <h2>全局函数空间怎样形成</h2>
+            <div class="theory-flow" id="globalTheoryFlow">
+              <div><small>参考单元</small><strong>N₀(K̂)</strong></div><span>Piola 映射</span>
+              <div><small>物理单元</small><strong>N₀(K)</strong></div><span>方向校正 · 公共边共享</span>
+              <div class="theory-result"><small>全局空间</small><strong>Vₕ ⊂ H(curl; Ω)</strong></div>
+            </div>
+            <p class="theory-conclusion" id="globalTheoryConclusion">单元内部使用局部棱元场，相邻单元共享切向读数。</p>
+          </section>
+        </div>
+        <aside class="scene-caption" aria-live="polite">
+          <span class="caption-index" id="knowledgeIndex">01 / 10</span>
+          <h2 id="knowledgeTitle">一切从整体电场开始</h2>
+          <p id="knowledgeText">先看区域中的场。这里用二维模型：位置在平面内，场值有两个分量。</p>
+          <div class="math-line" id="knowledgeFormula"></div>
+          <div class="scene-extras" id="knowledgeExtras"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="page implementation" id="implementation" aria-label="FEALPy 实现页" inert>
+      <div class="scene-topline"><span class="scene-number">02 / FEALPy 实现</span><span class="scene-kicker">两个程序 · 同一求解骨架</span></div>
+      <div class="implementation-layout">
+        <div class="implementation-visual">
+          <svg id="implementationSvg" viewBox="0 0 800 640" role="img" aria-label="FEALPy 求解流程中的网格、边自由度、矩阵和误差">
+            <defs><marker id="implArrow" markerWidth="5" markerHeight="5" refX="4.3" refY="2.5" orient="auto"><path d="M0 0 L5 2.5 L0 5" fill="#46bfc0"/></marker></defs>
+            <g id="implField"><g id="implFieldA"></g><g id="implFieldB"></g></g><g id="implMesh"></g><g id="implLeaving"></g><g id="implOverlay"></g><g id="implChart"></g>
+          </svg>
+          <div class="visual-footnote" id="visualFootnote">单位正方形被划分为三角形，电场在网格上求解。</div>
+        </div>
+        <aside class="implementation-content">
+          <div class="model-switch" role="group" aria-label="选择示例程序"><button type="button" class="active" data-model="A">模型 A · 验收</button><button type="button" data-model="B">模型 B · Maxwell 形态</button></div>
+          <span class="caption-index" id="implementationIndex">01 / 08</span>
+          <h2 id="implementationTitle">制造解</h2>
+          <p id="implementationText">先选一个已知电场，再由方程反推出源项。</p>
+          <div class="math-line" id="implementationFormula"></div>
+          <pre class="code-stage" id="implementationCode" aria-label="当前步骤的 FEALPy 代码"></pre>
+          <p class="model-note" id="modelNote"></p>
+        </aside>
+      </div>
+    </section>
+
+    <div class="page-dots" role="navigation" aria-label="页面导航"><button type="button" data-page="0" class="active" aria-current="page" aria-label="封面"></button><button type="button" data-page="1" aria-label="知识"></button><button type="button" data-page="2" aria-label="FEALPy 实现"></button></div>
+    <div class="transport" id="transport" hidden>
+      <button id="previousPage" type="button" aria-label="上一页">↖</button>
+      <div class="transport-main">
+        <div class="transport-step"><span id="transportPage">知识</span><strong id="transportStage">整体电场</strong><span id="transportCount">1 / 10</span></div>
+        <div class="transport-controls">
+          <button id="previousStage" type="button" aria-label="上一阶段">⟨</button>
+          <button id="stageStart" type="button" aria-label="回到本段起点">↤</button>
+          <button id="playPause" type="button" aria-label="播放本段">▶</button>
+          <button id="ambientToggle" type="button" aria-label="暂停场线流动" title="暂停或恢复场线流动">≈</button>
+          <button id="stageEnd" type="button" aria-label="跳到本段终点">↦</button>
+          <button id="nextStage" type="button" aria-label="下一阶段">⟩</button>
+          <input id="timeline" type="range" min="0" max="1000" value="0" aria-label="当前动画进度">
+        </div>
+        <div class="stage-list" id="stageList" aria-label="点击阶段名称跳转"></div>
+      </div>
+      <button id="nextPage" type="button" aria-label="下一页">↗</button>
+    </div>
+  </main>
+</body>
+</html>
